@@ -221,4 +221,6 @@ func Usage() {
 	log.Printf("  - uat          => v0.0.1-test1 => v0.0.1-uat1  ")
 	log.Printf("Combinations work:")
 	log.Printf("  - release test => v0.0.1-test1 => v0.1.0-test1  ")
+	log.Printf("Duplications don't:")
+	log.Printf("  - test test    => v0.0.1-test1 => v0.0.1-test2  ")
 }
