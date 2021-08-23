@@ -184,6 +184,8 @@ func main() {
 			if highest.test == nil {
 				z = z + 1
 			}
+		} else {
+			highest.pad = 2
 		}
 		highest.uat = &z
 		highest.test = nil
@@ -192,6 +194,8 @@ func main() {
 		z := 1
 		if variant != nil {
 			z = *variant + 1
+		} else {
+			highest.pad = 2
 		}
 		highest.test = &z
 		highest.uat = nil
