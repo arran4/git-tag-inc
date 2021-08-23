@@ -213,4 +213,12 @@ func main() {
 
 func Usage() {
 	log.Printf("You're using this wrong")
+	log.Printf("git-tag-inc then, one or more of: ")
+	log.Printf("  - major        => v0.0.1-test1 => v1.0.0       ")
+	log.Printf("  - minor        => v0.0.1-test1 => v0.1.0       ")
+	log.Printf("  - release      => v0.0.1-test1 => v0.0.2       ")
+	log.Printf("  - test         => v0.0.1-test1 => v0.0.1-test2 ")
+	log.Printf("  - uat          => v0.0.1-test1 => v0.0.1-uat1  ")
+	log.Printf("Combinations work:")
+	log.Printf("  - release test => v0.0.1-test1 => v0.1.0-test1  ")
 }
