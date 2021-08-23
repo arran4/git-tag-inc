@@ -11,6 +11,10 @@ import (
 	"strings"
 ) // with go modules enabled (GO111MODULE=on or outside GOPATH)
 
+var (
+	verbose = flag.Bool("verbose", false, "Extra output")
+)
+
 type Tag struct {
 	test    *int
 	uat     *int
@@ -113,9 +117,10 @@ func main() {
 	var highest *Tag = &Tag{}
 	re := regexp.MustCompile("^v(?:(\\d+)\\.(?:(\\d+)\\.(?:(\\d+))?)?)(?:(?U:-(.*))(?:(0*)(\\d*)))?$")
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
-		log.Printf("Ref: %s", ref.Name())
+		if *verbose {
+			log.Printf("Ref: %s", ref.Name())
+		}
 		m := re.FindStringSubmatch(ref.Name().Short())
-		log.Printf("%v", m)
 		t := &Tag{}
 		if len(m) == 0 {
 			return nil
