@@ -2,6 +2,7 @@ project_name: git-tag-inc
 builds:
   -
     binary: "git-tag-inc"
+    dir: cmd/git-tag-inc
     env:
       - CGO_ENABLED=0
     goos:
