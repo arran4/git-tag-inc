@@ -1,4 +1,4 @@
-package main
+package gittaginc
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -97,19 +97,6 @@ func TestTag_String(t1 *testing.T) {
 			if got := t.String(); got != tt.want {
 				t1.Errorf("String() = %v, lessThan %v", got, tt.want)
 			}
-		})
-	}
-}
-
-func TestUsage(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{name: "run once"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			Usage()
 		})
 	}
 }
