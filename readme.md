@@ -38,24 +38,31 @@ $ go install .
 $ git-tag-inc.exe test
 Largest: v0.0.1-test1
 Creating v0.0.1-test2
+
 $ git-tag-inc.exe uat
 Largest: v0.0.1-test2
 Creating v0.0.1-uat2
+
 $ git-tag-inc.exe uat
 Largest: v0.0.1-uat2
 Creating v0.0.1-uat3
+
 $ git-tag-inc.exe test
 Largest: v0.0.1-uat3
 Creating v0.0.1-test4
+
 $ git-tag-inc.exe minor
 Largest: v0.0.1-test4
 Creating v0.1.0
+
 $ git-tag-inc.exe minor test
 Largest: v0.1.0
 Creating v0.2.0-test01
+
 $ git-tag-inc.exe minor major test
 Largest: v0.2.0-test1
 Creating v1.1.0-test01
+
 $ git-tag-inc.exe release
 Largest: v1.1.0-test1
 Creating v1.1.1
