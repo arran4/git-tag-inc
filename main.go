@@ -110,101 +110,9 @@ func main() {
 		Usage()
 		return
 	}
-	iter, err := r.Tags()
-	if err != nil {
-		panic(err)
-	}
-	var highest *Tag = &Tag{}
-	re := regexp.MustCompile("^v(?:(\\d+)\\.(?:(\\d+)\\.(?:(\\d+))?)?)(?:(?U:-(.*))(?:(0*)(\\d*)))?$")
-	if err := iter.ForEach(func(ref *plumbing.Reference) error {
-		if *verbose {
-			log.Printf("Ref: %s", ref.Name())
-		}
-		m := re.FindStringSubmatch(ref.Name().Short())
-		t := &Tag{}
-		if len(m) == 0 {
-			return nil
-		}
-		if len(m) > 0 {
-			t.major, _ = strconv.Atoi(m[1])
-		}
-		if len(m) > 1 {
-			t.minor, _ = strconv.Atoi(m[2])
-		}
-		if len(m) > 2 {
-			t.release, _ = strconv.Atoi(m[3])
-		}
-		if len(m) > 5 {
-			v1 := len(m[5])
-			v2, _ := strconv.Atoi(m[6])
-			switch strings.ToLower(m[4]) {
-			case "test":
-				t.pad = v1
-				t.test = &v2
-			case "uat":
-				t.pad = v1
-				t.uat = &v2
-			}
-		}
-		if highest.LessThan(t) {
-			highest = t
-		}
-		return nil
-	}); err != nil {
-		panic(err)
-	}
+	highest := FindHighestVersionTag(r)
 	log.Printf("Largest: %s", highest)
-	if major {
-		highest.major++
-		highest.minor = 0
-		highest.release = 0
-		highest.uat = nil
-		highest.test = nil
-	}
-	if minor {
-		highest.minor++
-		highest.release = 0
-		highest.uat = nil
-		highest.test = nil
-	}
-	var variant *int = nil
-	if highest.uat != nil {
-		variant = highest.uat
-	}
-	if highest.test != nil {
-		if variant != nil && *variant < *highest.test || variant == nil {
-			variant = highest.test
-		}
-	}
-	if release || (variant == nil && (uat || test) && !(minor || major)) {
-		highest.release += 1
-		highest.uat = nil
-		highest.test = nil
-	}
-
-	if uat {
-		z := 1
-		if variant != nil {
-			z = *variant
-			if highest.test == nil {
-				z = z + 1
-			}
-		} else {
-			highest.pad = 2
-		}
-		highest.uat = &z
-		highest.test = nil
-	}
-	if test {
-		z := 1
-		if variant != nil {
-			z = *variant + 1
-		} else {
-			highest.pad = 2
-		}
-		highest.test = &z
-		highest.uat = nil
-	}
+	highest.Increment(major, minor, release, uat, test)
 
 	log.Printf("Creating %s", highest)
 
@@ -217,6 +125,118 @@ func main() {
 	})
 	if err != nil {
 		panic(err)
+	}
+}
+
+func FindHighestVersionTag(r *git.Repository) *Tag {
+	iter, err := r.Tags()
+	if err != nil {
+		panic(err)
+	}
+	var highest *Tag = &Tag{}
+	if err := iter.ForEach(func(ref *plumbing.Reference) error {
+		if *verbose {
+			log.Printf("Ref: %s", ref.Name())
+		}
+		t := ParseTag(ref.Name().Short())
+		if t == nil {
+			return nil
+		}
+		if highest.LessThan(t) {
+			highest = t
+		}
+		return nil
+	}); err != nil {
+		panic(err)
+	}
+	return highest
+}
+
+var ParseTagRe = regexp.MustCompile("^v(?:(\\d+)\\.(?:(\\d+)\\.(?:(\\d+))?)?)(?:(?U:-(.*))((?:0*)(\\d*)))?$")
+
+func ParseTag(tag string) *Tag {
+	m := ParseTagRe.FindStringSubmatch(tag)
+	t := &Tag{}
+	if len(m) == 0 {
+		return nil
+	}
+	if len(m) > 0 {
+		t.major, _ = strconv.Atoi(m[1])
+	}
+	if len(m) > 1 {
+		t.minor, _ = strconv.Atoi(m[2])
+	}
+	if len(m) > 2 {
+		t.release, _ = strconv.Atoi(m[3])
+	}
+	if len(m) > 5 && m[4] != "" {
+		v1 := len(m[5])
+		v2, _ := strconv.Atoi(m[6])
+		switch strings.ToLower(m[4]) {
+		case "test":
+			t.pad = v1
+			t.test = &v2
+		case "uat":
+			t.pad = v1
+			t.uat = &v2
+		default:
+			return nil
+		}
+	}
+	return t
+}
+
+func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test bool) {
+	if major {
+		t.major++
+		t.minor = 0
+		t.release = 0
+		t.uat = nil
+		t.test = nil
+	}
+	if minor {
+		t.minor++
+		t.release = 0
+		t.uat = nil
+		t.test = nil
+	}
+	var variant *int = nil
+	if t.uat != nil {
+		variant = t.uat
+	}
+	if t.test != nil {
+		if variant != nil && *variant < *t.test || variant == nil {
+			variant = t.test
+		}
+	}
+	if release || (variant == nil && (uat || test) && !(minor || major)) {
+		t.release += 1
+		t.uat = nil
+		t.test = nil
+	}
+
+	if uat {
+		z := 1
+		if variant != nil {
+			z = *variant
+			if t.test == nil {
+				z = z + 1
+			}
+		} else {
+			t.pad = 2
+		}
+		t.uat = &z
+		t.test = nil
+	}
+	if test {
+		z := 1
+		if variant != nil {
+			z = *variant + 1
+		} else {
+			t.pad = 2
+		}
+		t.test = &z
+		t.uat = nil
 	}
 }
 
