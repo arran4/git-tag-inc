@@ -13,8 +13,17 @@ var (
 	verbose = flag.Bool("verbose", false, "Extra output")
 )
 
+// nolint: gochecknoglobals
+var (
+	version = "dev"
+	commit  = ""
+	date    = ""
+	builtBy = ""
+)
+
 func main() {
 	flag.Parse()
+	log.Printf("Version: %s (%s) by %s commit %s", version, date, builtBy, commit)
 	r, err := git.PlainOpen(".git")
 	if err != nil {
 		panic(err)
