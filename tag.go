@@ -103,42 +103,42 @@ func ParseTag(tag string) *Tag {
 }
 
 func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test bool) {
+	puat := t.uat
+	ptest := t.test
 	if major {
 		t.major++
 		t.minor = 0
 		t.release = 0
 		t.uat = nil
 		t.test = nil
+		puat = pi(0)
+		ptest = pi(0)
 	}
 	if minor {
 		t.minor++
 		t.release = 0
 		t.uat = nil
 		t.test = nil
+		puat = pi(0)
+		ptest = pi(0)
 	}
-	var variant *int = nil
-	if t.uat != nil {
-		variant = t.uat
-	}
-	if t.test != nil {
-		if variant != nil && *variant < *t.test || variant == nil {
-			variant = t.test
-		}
-	}
-	if release || (variant == nil && (uat || test) && !(minor || major)) {
+	if release {
 		t.release += 1
 		t.uat = nil
 		t.test = nil
+		puat = pi(0)
+		ptest = pi(0)
 	}
 
 	if uat {
 		z := 1
-		if variant != nil {
-			z = *variant
-			if t.test == nil {
-				z = z + 1
-			}
+		if puat != nil {
+			z = *puat
+			z = z + 1
+		} else if ptest != nil {
+			z = *ptest
 		} else {
+			t.release += 1
 			t.pad = 2
 		}
 		t.uat = &z
@@ -146,9 +146,14 @@ func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test boo
 	}
 	if test {
 		z := 1
-		if variant != nil {
-			z = *variant + 1
+		if puat != nil {
+			z = *puat
+			z = z + 1
+		} else if ptest != nil {
+			z = *ptest
+			z = z + 1
 		} else {
+			t.release += 1
 			t.pad = 2
 		}
 		t.test = &z

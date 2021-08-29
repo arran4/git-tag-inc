@@ -6,7 +6,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"log"
-	"strings"
 )
 
 var (
@@ -28,31 +27,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	test := false
-	uat := false
-	release := false
-	major := false
-	minor := false
-	d := 0
-	for _, f := range flag.Args() {
-		switch strings.ToLower(f) {
-		case "test":
-			test = true
-		case "uat":
-			uat = true
-		case "release":
-			release = true
-		case "major":
-			major = true
-		case "minor":
-			minor = true
-		default:
-			Usage()
-			return
-		}
-		d++
-	}
-	if d == 0 {
+	major, minor, uat, release, test := gittaginc.CommandsToFlags(flag.Args())
+	if !test && !uat && !release && !major && !minor {
 		Usage()
 		return
 	}
