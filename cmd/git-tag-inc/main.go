@@ -148,6 +148,7 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 }
 
 func Usage() {
+	flag.Usage()
 	log.Printf("You're using this wrong")
 	log.Printf("git-tag-inc then, one or more of: ")
 	log.Printf("  - major        => v0.0.1-test1 => v1.0.0       ")
