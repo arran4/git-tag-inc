@@ -17,17 +17,14 @@ type Tag struct {
 }
 
 func (t *Tag) LessThan(other *Tag) bool {
-	if t.Major < other.Major {
-		return true
+	if t.Major != other.Major {
+		return t.Major < other.Major
 	}
-	if t.Minor < other.Minor {
-		return true
+	if t.Minor != other.Minor {
+		return t.Minor < other.Minor
 	}
-	if t.Release < other.Release {
-		return true
-	}
-	if t.Release > other.Release {
-		return false
+	if t.Release != other.Release {
+		return t.Release < other.Release
 	}
 	var tv *int = nil
 	if t.Uat != nil {

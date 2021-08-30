@@ -222,9 +222,9 @@ func TestWhole(t *testing.T) {
 		outStr   string
 		commands []string
 	}{
-		{name: "test to release", inStr: "v0.0.1-test99", outStr: "v0.0.2-test01", commands: []string{"release", "test"}},
-		{name: "test to major", inStr: "v0.0.1-test99", outStr: "v1.0.0-test01", commands: []string{"major", "test"}},
-		{name: "test to minor", inStr: "v0.0.1-test99", outStr: "v0.1.0-test01", commands: []string{"minor", "test"}},
+		{name: "test to test release", inStr: "v0.0.1-test99", outStr: "v0.0.2-test01", commands: []string{"release", "test"}},
+		{name: "test to test major", inStr: "v0.0.1-test99", outStr: "v1.0.0-test01", commands: []string{"major", "test"}},
+		{name: "test to test minor", inStr: "v0.0.1-test99", outStr: "v0.1.0-test01", commands: []string{"minor", "test"}},
 		{name: "test to uat", inStr: "v0.0.8-test01", outStr: "v0.0.8-uat01", commands: []string{"uat"}},
 		{name: "uat to release", inStr: "v0.0.8-uat01", outStr: "v0.0.8", commands: []string{"release"}},
 		{name: "test to release", inStr: "v0.0.8-test01", outStr: "v0.0.8", commands: []string{"release"}},
@@ -237,6 +237,35 @@ func TestWhole(t *testing.T) {
 			got := tag.String()
 			if !reflect.DeepEqual(got, tt.outStr) {
 				t.Errorf("'%s'.Increment(%v) => %v, Should be %v", tt.inStr, tt.commands, got, tt.outStr)
+			}
+		})
+	}
+}
+
+func TestCompare(t *testing.T) {
+	tests := []struct {
+		name      string
+		t1        string
+		t2        string
+		t1smaller bool
+	}{
+		{name: "test to test release", t1: "v0.0.1-test99", t2: "v0.0.2-test01", t1smaller: true},
+		{name: "test to test major", t1: "v0.0.1-test99", t2: "v1.0.0-test01", t1smaller: true},
+		{name: "test to test minor", t1: "v0.0.1-test99", t2: "v0.1.0-test01", t1smaller: true},
+		{name: "test to uat", t1: "v0.0.8-test01", t2: "v0.0.8-uat01", t1smaller: true},
+		{name: "uat to release", t1: "v0.0.8-uat01", t2: "v0.0.8", t1smaller: true},
+		{name: "test to release", t1: "v0.0.8-test01", t2: "v0.0.8", t1smaller: true},
+		{name: "test to test", t1: "v0.0.8-test01", t2: "v0.0.8-test02", t1smaller: true},
+		{name: "release to test", t1: "v1.0.0", t2: "v1.0.1-test01", t1smaller: true},
+		{name: "test to test", t1: "v1.0.1-uat01", t2: "v0.0.1", t1smaller: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t1 := ParseTag(tt.t1)
+			t2 := ParseTag(tt.t2)
+			got := t1.LessThan(t2)
+			if got != tt.t1smaller {
+				t.Errorf("'%s'.LessThan(%v) => %v, Should be %v", t1, t2, got, tt.t1smaller)
 			}
 		})
 	}
