@@ -228,6 +228,7 @@ func TestWhole(t *testing.T) {
 		{name: "test to uat", inStr: "v0.0.8-test01", outStr: "v0.0.8-uat01", commands: []string{"uat"}},
 		{name: "uat to release", inStr: "v0.0.8-uat01", outStr: "v0.0.8", commands: []string{"release"}},
 		{name: "test to release", inStr: "v0.0.8-test01", outStr: "v0.0.8", commands: []string{"release"}},
+		{name: "test to test", inStr: "v0.0.8-test01", outStr: "v0.0.8-test02", commands: []string{"test"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
