@@ -131,12 +131,15 @@ func TestTag_Increment(t1 *testing.T) {
 		{name: "Simple version uat flag - no flags", fields: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: false, uat: false, test: false}},
 		{name: "Simple version with test - major ", fields: &Tag{test: pi(1), uat: nil, release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: nil, release: 0, major: 2, minor: 0, pad: 2}, args: args{major: true, minor: false, release: false, uat: false, test: false}},
 		{name: "Simple version with test - minor ", fields: &Tag{test: pi(1), uat: nil, release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: nil, release: 0, major: 1, minor: 2, pad: 2}, args: args{major: false, minor: true, release: false, uat: false, test: false}},
-		{name: "Simple version with test - release ", fields: &Tag{test: pi(1), uat: nil, release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: nil, release: 2, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: true, uat: false, test: false}},
+		{name: "Simple version with test - release ",
+			fields:   &Tag{test: pi(1), uat: nil, release: 1, major: 1, minor: 1, pad: 2},
+			expected: &Tag{test: nil, uat: nil, release: 1, major: 1, minor: 1, pad: 2},
+			args:     args{major: false, minor: false, release: true, uat: false, test: false}},
 		{name: "Simple version with test - uat ", fields: &Tag{test: pi(1), uat: nil, release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: false, uat: true, test: false}},
 		{name: "Simple version with test - test ", fields: &Tag{test: pi(1), uat: nil, release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: pi(2), uat: nil, release: 1, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: false, uat: false, test: true}},
 		{name: "Simple version with uat - major ", fields: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: nil, release: 0, major: 2, minor: 0, pad: 2}, args: args{major: true, minor: false, release: false, uat: false, test: false}},
 		{name: "Simple version with uat - minor ", fields: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: nil, release: 0, major: 1, minor: 2, pad: 2}, args: args{major: false, minor: true, release: false, uat: false, test: false}},
-		{name: "Simple version with uat - release ", fields: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: nil, release: 2, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: true, uat: false, test: false}},
+		{name: "Simple version with uat - release ", fields: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: nil, release: 1, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: true, uat: false, test: false}},
 		{name: "Simple version with uat - uat ", fields: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: nil, uat: pi(2), release: 1, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: false, uat: true, test: false}},
 		{name: "Simple version with uat - test ", fields: &Tag{test: nil, uat: pi(1), release: 1, major: 1, minor: 1, pad: 2}, expected: &Tag{test: pi(2), uat: nil, release: 1, major: 1, minor: 1, pad: 2}, args: args{major: false, minor: false, release: false, uat: false, test: true}},
 		{name: "Simple version - major ", fields: &Tag{test: nil, uat: nil, release: 1, major: 1, minor: 1, pad: 0}, expected: &Tag{test: nil, uat: nil, release: 0, major: 2, minor: 0, pad: 0}, args: args{major: true, minor: false, release: false, uat: false, test: false}},
@@ -223,6 +226,8 @@ func TestWhole(t *testing.T) {
 		{name: "test to major", inStr: "v0.0.1-test99", outStr: "v1.0.0-test01", commands: []string{"major", "test"}},
 		{name: "test to minor", inStr: "v0.0.1-test99", outStr: "v0.1.0-test01", commands: []string{"minor", "test"}},
 		{name: "test to uat", inStr: "v0.0.8-test01", outStr: "v0.0.8-uat01", commands: []string{"uat"}},
+		{name: "uat to release", inStr: "v0.0.8-uat01", outStr: "v0.0.8", commands: []string{"release"}},
+		{name: "test to release", inStr: "v0.0.8-test01", outStr: "v0.0.8", commands: []string{"release"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

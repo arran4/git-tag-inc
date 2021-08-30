@@ -123,7 +123,9 @@ func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test boo
 		ptest = pi(0)
 	}
 	if release {
-		t.release += 1
+		if (t.test == nil || test) && (t.uat == nil || uat) {
+			t.release += 1
+		}
 		t.uat = nil
 		t.test = nil
 		puat = pi(0)
@@ -137,8 +139,10 @@ func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test boo
 			z = z + 1
 		} else if ptest != nil {
 			z = *ptest
-		} else {
+		} else if !release && !major && !minor {
 			t.release += 1
+			t.pad = 2
+		} else {
 			t.pad = 2
 		}
 		t.uat = &z
@@ -152,8 +156,10 @@ func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test boo
 		} else if ptest != nil {
 			z = *ptest
 			z = z + 1
-		} else {
+		} else if !release && !major && !minor {
 			t.release += 1
+			t.pad = 2
+		} else {
 			t.pad = 2
 		}
 		t.test = &z
