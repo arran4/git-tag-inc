@@ -27,7 +27,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	major, minor, uat, release, test := gittaginc.CommandsToFlags(flag.Args())
+	major, minor, release, uat, test := gittaginc.CommandsToFlags(flag.Args())
 	if !test && !uat && !release && !major && !minor {
 		Usage()
 		return
