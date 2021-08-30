@@ -10,6 +10,7 @@ import (
 
 var (
 	verbose = flag.Bool("verbose", false, "Extra output")
+	dry     = flag.Bool("dry", false, "Dry run")
 )
 
 // nolint: gochecknoglobals
@@ -22,6 +23,9 @@ var (
 
 func main() {
 	flag.Parse()
+	if !*verbose {
+		log.SetFlags(0)
+	}
 	log.Printf("Version: %s (%s) by %s commit %s", version, date, builtBy, commit)
 	r, err := git.PlainOpen(".git")
 	if err != nil {
@@ -42,9 +46,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_, err = r.CreateTag(highest.String(), h.Hash(), &git.CreateTagOptions{
-		Message: highest.String(),
-	})
+	if !*dry {
+		_, err = r.CreateTag(highest.String(), h.Hash(), &git.CreateTagOptions{
+			Message: highest.String(),
+		})
+	}
 	if err != nil {
 		panic(err)
 	}
