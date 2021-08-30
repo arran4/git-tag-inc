@@ -6,12 +6,14 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"log"
+	"os"
 )
 
 var (
-	verbose = flag.Bool("verbose", false, "Extra output")
-	dry     = flag.Bool("dry", false, "Dry run")
-	check   = flag.Bool("check", true, "Check if there are uncommitted files in repo before running")
+	verbose   = flag.Bool("verbose", false, "Extra output")
+	dry       = flag.Bool("dry", false, "Dry run")
+	ignore    = flag.Bool("ignore", true, "Ignore uncommitted files")
+	repeating = flag.Bool("repeating", false, "Allow new tags to repeat a previous")
 )
 
 // nolint: gochecknoglobals
@@ -33,7 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	if *check {
+	if !*ignore {
 		wt, err := r.Worktree()
 		if err != nil {
 			panic(err)
@@ -44,6 +46,7 @@ func main() {
 		}
 		if !s.IsClean() {
 			log.Printf("There are uncommited changes in thils repo.")
+			os.Exit(1)
 			return
 		}
 	}
@@ -53,8 +56,32 @@ func main() {
 		Usage()
 		return
 	}
+	if (uat || test) && !*repeating {
+		lastSimilar := FindHighestSimilarVersionTag(r, test, uat)
+		var lstrh string
+		lstr, err := r.Tag(lastSimilar.String())
+		if err == git.ErrTagNotFound {
+
+		} else if err != nil {
+			panic(err)
+		} else {
+			lstrh = lstr.Hash().String()
+		}
+		ch, err := r.Head()
+		if err != nil {
+			panic(err)
+		}
+		chh := ch.Hash().String()
+		if lstrh == chh {
+			log.Printf("Hash is the same for this and previous tag: %s", lastSimilar.String())
+			os.Exit(1)
+			return
+		}
+	}
+
 	highest := FindHighestVersionTag(r)
 	log.Printf("Largest: %s", highest)
+
 	highest.Increment(major, minor, release, uat, test)
 
 	log.Printf("Creating %s", highest)
@@ -75,7 +102,28 @@ func main() {
 	}
 }
 
+func FindHighestSimilarVersionTag(r *git.Repository, test bool, uat bool) *gittaginc.Tag {
+	if !uat && !test {
+		return &gittaginc.Tag{}
+	}
+	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
+		if test && current.Test == nil {
+			return false
+		}
+		if uat && current.Uat == nil {
+			return false
+		}
+		return last.LessThan(current)
+	})
+}
+
 func FindHighestVersionTag(r *git.Repository) *gittaginc.Tag {
+	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
+		return last.LessThan(current)
+	})
+}
+
+func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) bool) *gittaginc.Tag {
 	iter, err := r.Tags()
 	if err != nil {
 		panic(err)
@@ -89,7 +137,7 @@ func FindHighestVersionTag(r *git.Repository) *gittaginc.Tag {
 		if t == nil {
 			return nil
 		}
-		if highest.LessThan(t) {
+		if stop(highest, t) {
 			highest = t
 		}
 		return nil

@@ -8,38 +8,38 @@ import (
 )
 
 type Tag struct {
-	test    *int
-	uat     *int
-	release int
-	major   int
-	minor   int
-	pad     int
+	Test    *int
+	Uat     *int
+	Release int
+	Major   int
+	Minor   int
+	Pad     int
 }
 
 func (t *Tag) LessThan(other *Tag) bool {
-	if t.major < other.major {
+	if t.Major < other.Major {
 		return true
 	}
-	if t.minor < other.minor {
+	if t.Minor < other.Minor {
 		return true
 	}
-	if t.release < other.release {
+	if t.Release < other.Release {
 		return true
 	}
-	if t.release > other.release {
+	if t.Release > other.Release {
 		return false
 	}
 	var tv *int = nil
-	if t.uat != nil {
-		tv = t.uat
-	} else if t.test != nil {
-		tv = t.test
+	if t.Uat != nil {
+		tv = t.Uat
+	} else if t.Test != nil {
+		tv = t.Test
 	}
 	var ov *int = nil
-	if other.uat != nil {
-		ov = other.uat
-	} else if other.test != nil {
-		ov = other.test
+	if other.Uat != nil {
+		ov = other.Uat
+	} else if other.Test != nil {
+		ov = other.Test
 	}
 	if tv == nil {
 		return false
@@ -51,7 +51,7 @@ func (t *Tag) LessThan(other *Tag) bool {
 		return true
 	}
 	if *tv == *ov {
-		if other.uat != nil && t.test != nil {
+		if other.Uat != nil && t.Test != nil {
 			return true
 		}
 	}
@@ -60,12 +60,12 @@ func (t *Tag) LessThan(other *Tag) bool {
 
 func (t *Tag) String() string {
 	ext := ""
-	if t.uat != nil {
-		ext = fmt.Sprintf("-uat%0"+fmt.Sprintf("%d", t.pad)+"d", *t.uat)
-	} else if t.test != nil {
-		ext = fmt.Sprintf("-test%0"+fmt.Sprintf("%d", t.pad)+"d", *t.test)
+	if t.Uat != nil {
+		ext = fmt.Sprintf("-uat%0"+fmt.Sprintf("%d", t.Pad)+"d", *t.Uat)
+	} else if t.Test != nil {
+		ext = fmt.Sprintf("-test%0"+fmt.Sprintf("%d", t.Pad)+"d", *t.Test)
 	}
-	return fmt.Sprintf("v%d.%d.%d%s", t.major, t.minor, t.release, ext)
+	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Release, ext)
 }
 
 var ParseTagRe = regexp.MustCompile("^v(?:(\\d+)\\.(?:(\\d+)\\.(?:(\\d+))?)?)(?:(?U:-(.*))((?:0*)(\\d*)))?$")
@@ -77,24 +77,24 @@ func ParseTag(tag string) *Tag {
 		return nil
 	}
 	if len(m) > 0 {
-		t.major, _ = strconv.Atoi(m[1])
+		t.Major, _ = strconv.Atoi(m[1])
 	}
 	if len(m) > 1 {
-		t.minor, _ = strconv.Atoi(m[2])
+		t.Minor, _ = strconv.Atoi(m[2])
 	}
 	if len(m) > 2 {
-		t.release, _ = strconv.Atoi(m[3])
+		t.Release, _ = strconv.Atoi(m[3])
 	}
 	if len(m) > 5 && m[4] != "" {
 		v1 := len(m[5])
 		v2, _ := strconv.Atoi(m[6])
 		switch strings.ToLower(m[4]) {
 		case "test":
-			t.pad = v1
-			t.test = &v2
+			t.Pad = v1
+			t.Test = &v2
 		case "uat":
-			t.pad = v1
-			t.uat = &v2
+			t.Pad = v1
+			t.Uat = &v2
 		default:
 			return nil
 		}
@@ -103,31 +103,31 @@ func ParseTag(tag string) *Tag {
 }
 
 func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test bool) {
-	puat := t.uat
-	ptest := t.test
+	puat := t.Uat
+	ptest := t.Test
 	if major {
-		t.major++
-		t.minor = 0
-		t.release = 0
-		t.uat = nil
-		t.test = nil
+		t.Major++
+		t.Minor = 0
+		t.Release = 0
+		t.Uat = nil
+		t.Test = nil
 		puat = pi(0)
 		ptest = pi(0)
 	}
 	if minor {
-		t.minor++
-		t.release = 0
-		t.uat = nil
-		t.test = nil
+		t.Minor++
+		t.Release = 0
+		t.Uat = nil
+		t.Test = nil
 		puat = pi(0)
 		ptest = pi(0)
 	}
 	if release {
-		if (t.test == nil || test) && (t.uat == nil || uat) {
-			t.release += 1
+		if (t.Test == nil || test) && (t.Uat == nil || uat) {
+			t.Release += 1
 		}
-		t.uat = nil
-		t.test = nil
+		t.Uat = nil
+		t.Test = nil
 		puat = pi(0)
 		ptest = pi(0)
 	}
@@ -140,13 +140,13 @@ func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test boo
 		} else if ptest != nil {
 			z = *ptest
 		} else if !release && !major && !minor {
-			t.release += 1
-			t.pad = 2
+			t.Release += 1
+			t.Pad = 2
 		} else {
-			t.pad = 2
+			t.Pad = 2
 		}
-		t.uat = &z
-		t.test = nil
+		t.Uat = &z
+		t.Test = nil
 	}
 	if test {
 		z := 1
@@ -157,12 +157,12 @@ func (t *Tag) Increment(major bool, minor bool, release bool, uat bool, test boo
 			z = *ptest
 			z = z + 1
 		} else if !release && !major && !minor {
-			t.release += 1
-			t.pad = 2
+			t.Release += 1
+			t.Pad = 2
 		} else {
-			t.pad = 2
+			t.Pad = 2
 		}
-		t.test = &z
-		t.uat = nil
+		t.Test = &z
+		t.Uat = nil
 	}
 }
