@@ -50,6 +50,8 @@ func main() {
 		_, err = r.CreateTag(highest.String(), h.Hash(), &git.CreateTagOptions{
 			Message: highest.String(),
 		})
+	} else {
+		log.Printf("Dry run finished.")
 	}
 	if err != nil {
 		panic(err)
