@@ -11,6 +11,7 @@ import (
 var (
 	verbose = flag.Bool("verbose", false, "Extra output")
 	dry     = flag.Bool("dry", false, "Dry run")
+	check   = flag.Bool("check", true, "Check if there are uncommited files in repo before running")
 )
 
 // nolint: gochecknoglobals
@@ -27,10 +28,26 @@ func main() {
 		log.SetFlags(0)
 	}
 	log.Printf("Version: %s (%s) by %s commit %s", version, date, builtBy, commit)
-	r, err := git.PlainOpen(".git")
+	r, err := git.PlainOpen(".")
 	if err != nil {
 		panic(err)
 	}
+
+	if *check {
+		wt, err := r.Worktree()
+		if err != nil {
+			panic(err)
+		}
+		s, err := wt.Status()
+		if err != nil {
+			panic(err)
+		}
+		if !s.IsClean() {
+			log.Printf("There are uncommited changes in thils repo.")
+			return
+		}
+	}
+
 	major, minor, release, uat, test := gittaginc.CommandsToFlags(flag.Args())
 	if !test && !uat && !release && !major && !minor {
 		Usage()
