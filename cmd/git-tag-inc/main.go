@@ -11,7 +11,7 @@ import (
 var (
 	verbose = flag.Bool("verbose", false, "Extra output")
 	dry     = flag.Bool("dry", false, "Dry run")
-	check   = flag.Bool("check", true, "Check if there are uncommited files in repo before running")
+	check   = flag.Bool("check", true, "Check if there are uncommitted files in repo before running")
 )
 
 // nolint: gochecknoglobals
