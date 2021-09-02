@@ -5,6 +5,7 @@ import (
 	"github.com/arran4/git-tag-inc"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"log"
 	"os"
 )
@@ -29,7 +30,9 @@ func main() {
 	if !*verbose {
 		log.SetFlags(0)
 	}
-	log.Printf("Version: %s (%s) by %s commit %s", version, date, builtBy, commit)
+	if *verbose {
+		log.Printf("Version: %s (%s) by %s commit %s", version, date, builtBy, commit)
+	}
 	r, err := git.PlainOpen(".")
 	if err != nil {
 		panic(err)
@@ -56,31 +59,26 @@ func main() {
 		Usage()
 		return
 	}
-	if (uat || test) && !*repeating {
+	currentHash, err := GetHash(r, nil)
+	if err != nil {
+		panic(err)
+	}
+	if !*repeating && currentHash != "" {
 		lastSimilar := FindHighestSimilarVersionTag(r, test, uat)
-		var lstrh string
-		lstr, err := r.Tag(lastSimilar.String())
-		if err == git.ErrTagNotFound {
-
-		} else if err != nil {
-			panic(err)
-		} else {
-			lstrh = lstr.Hash().String()
-		}
-		ch, err := r.Head()
+		lastSimilarHash, err := GetHash(r, lastSimilar)
 		if err != nil {
 			panic(err)
 		}
-		chh := ch.Hash().String()
-		if lstrh == chh {
-			log.Printf("Hash is the same for this and previous tag: %s", lastSimilar.String())
+		if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
+			log.Printf("Hash is the same for this and previous tag: (%s) %s and %s", lastSimilar, lastSimilarHash, currentHash)
 			os.Exit(1)
 			return
 		}
 	}
 
 	highest := FindHighestVersionTag(r)
-	log.Printf("Largest: %s", highest)
+
+	log.Printf("Largest: %s (%s)", highest, currentHash)
 
 	highest.Increment(major, minor, release, uat, test)
 
@@ -102,15 +100,44 @@ func main() {
 	}
 }
 
-func FindHighestSimilarVersionTag(r *git.Repository, test bool, uat bool) *gittaginc.Tag {
-	if !uat && !test {
-		return &gittaginc.Tag{}
+func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
+	var err error
+	var ref *plumbing.Reference
+	var to *object.Tag
+	if lastSimilar != nil {
+		ref, err = r.Tag(lastSimilar.String())
+		if err == git.ErrTagNotFound {
+			return "", nil
+		} else if err != nil {
+			return "", err
+		}
+		to, err = r.TagObject(ref.Hash())
+		if err == git.ErrTagNotFound {
+			return "", nil
+		} else if err != nil {
+			return "", err
+		}
+		return to.Target.String(), nil
+	} else {
+		ref, err = r.Head()
+		if err == git.ErrTagNotFound {
+			return "", nil
+		} else if err != nil {
+			return "", err
+		}
+		return ref.Hash().String(), nil
 	}
+}
+
+func FindHighestSimilarVersionTag(r *git.Repository, test bool, uat bool) *gittaginc.Tag {
 	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		if test && current.Test == nil {
 			return false
 		}
 		if uat && current.Uat == nil {
+			return false
+		}
+		if !uat && !test && (current.Uat != nil || current.Test != nil) {
 			return false
 		}
 		return last.LessThan(current)
