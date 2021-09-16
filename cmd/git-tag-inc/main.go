@@ -65,14 +65,16 @@ func main() {
 	}
 	if !*repeating && currentHash != "" {
 		lastSimilar := FindHighestSimilarVersionTag(r, test, uat)
-		lastSimilarHash, err := GetHash(r, lastSimilar)
-		if err != nil {
-			panic(err)
-		}
-		if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
-			log.Printf("Hash is the same for this and previous tag: (%s) %s and %s", lastSimilar, lastSimilarHash, currentHash)
-			os.Exit(1)
-			return
+		if lastSimilar != nil {
+			lastSimilarHash, err := GetHash(r, lastSimilar)
+			if err != nil {
+				panic(err)
+			}
+			if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
+				log.Printf("Hash is the same for this and previous tag: (%s) %s and %s", lastSimilar, lastSimilarHash, currentHash)
+				os.Exit(1)
+				return
+			}
 		}
 	}
 
