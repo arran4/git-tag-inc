@@ -6,6 +6,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/pkg/errors"
 	"log"
 	"os"
 )
@@ -68,12 +69,17 @@ func main() {
 		if lastSimilar != nil {
 			lastSimilarHash, err := GetHash(r, lastSimilar)
 			if err != nil {
-				panic(err)
-			}
-			if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
-				log.Printf("Hash is the same for this and previous tag: (%s) %s and %s", lastSimilar, lastSimilarHash, currentHash)
-				os.Exit(1)
-				return
+				switch {
+				case errors.Is(err, plumbing.ErrObjectNotFound):
+				default:
+					panic(err)
+				}
+			} else {
+				if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
+					log.Printf("Hash is the same for this and previous tag: (%s) %s and %s", lastSimilar, lastSimilarHash, currentHash)
+					os.Exit(1)
+					return
+				}
 			}
 		}
 	}
