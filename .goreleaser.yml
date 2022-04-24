@@ -1,6 +1,7 @@
 project_name: git-tag-inc
 builds:
   -
+    id: "git-tag-inc"
     binary: "git-tag-inc"
     dir: cmd/git-tag-inc
     env:
