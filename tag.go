@@ -65,7 +65,7 @@ func (t *Tag) String() string {
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Release, ext)
 }
 
-var ParseTagRe = regexp.MustCompile("^v(?:(\\d+)\\.(?:(\\d+)\\.(?:(\\d+))?)?)(?:(?U:-(.*))((?:0*)(\\d*)))?$")
+var ParseTagRe = regexp.MustCompile(`^v(?:(\d+)\.(?:(\d+)\.(?:(\d+))?)?)(?:(?U:-(.*))((?:0*)(\d*)))?$`)
 
 func ParseTag(tag string) *Tag {
 	m := ParseTagRe.FindStringSubmatch(tag)

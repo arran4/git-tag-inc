@@ -102,14 +102,6 @@ func TestTag_String(t1 *testing.T) {
 }
 
 func TestTag_Increment(t1 *testing.T) {
-	type fields struct {
-		test    *int
-		uat     *int
-		release int
-		major   int
-		minor   int
-		pad     int
-	}
 	type args struct {
 		major   bool
 		minor   bool
