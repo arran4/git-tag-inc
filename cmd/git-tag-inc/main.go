@@ -2,20 +2,25 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/arran4/git-tag-inc"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/pkg/errors"
-	"log"
-	"os"
 )
 
 var (
-	verbose   = flag.Bool("verbose", false, "Extra output")
-	dry       = flag.Bool("dry", false, "Dry run")
-	ignore    = flag.Bool("ignore", true, "Ignore uncommitted files")
-	repeating = flag.Bool("repeating", false, "Allow new tags to repeat a previous")
+	verbose     = flag.Bool("verbose", false, "Extra output")
+	showVersion = flag.Bool("version", false, "Print version information")
+	dry         = flag.Bool("dry", false, "Dry run")
+	ignore      = flag.Bool("ignore", true, "Ignore uncommitted files")
+	repeating   = flag.Bool("repeating", false, "Allow new tags to repeat a previous")
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
 	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
@@ -25,12 +30,18 @@ var (
 var (
 	version = "dev"
 	commit  = ""
+	branch  = ""
 	date    = ""
 	builtBy = ""
+	repo    = "https://github.com/arran4/git-tag-inc"
 )
 
 func main() {
 	flag.Parse()
+	if *showVersion {
+		printVersion()
+		return
+	}
 	gittaginc.Mode = *mode
 	if !*verbose {
 		log.SetFlags(0)
@@ -41,6 +52,22 @@ func main() {
 	r, err := git.PlainOpen(".")
 	if err != nil {
 		panic(err)
+	}
+
+	cfg, cfgErr := r.ConfigScoped(config.SystemScope)
+	var tagger *object.Signature
+	if cfgErr == nil {
+		if cfg.User.Name == "" || cfg.User.Email == "" {
+			log.Printf("git user.name or user.email not configured")
+			log.Printf("Run `git config --global user.name \"Your Name\"` and `git config --global user.email \"you@example.com\"`")
+			os.Exit(1)
+			return
+		}
+		tagger = &object.Signature{
+			Name:  cfg.User.Name,
+			Email: cfg.User.Email,
+			When:  time.Now(),
+		}
 	}
 
 	if !*ignore {
@@ -103,6 +130,7 @@ func main() {
 	if !*dry {
 		_, err = r.CreateTag(highest.String(), h.Hash(), &git.CreateTagOptions{
 			Message: highest.String(),
+			Tagger:  tagger,
 		})
 	} else {
 		log.Printf("Dry run finished.")
@@ -211,4 +239,13 @@ func Usage() {
 	log.Printf("Duplications don't:")
 	log.Printf("  - test test    => v0.0.1-test1 => v0.0.1-test2  ")
 	log.Printf("Use --mode arraneous to switch to legacy naming")
+}
+
+func printVersion() {
+	fmt.Printf("git-tag-inc version %s\n", version)
+	fmt.Printf("commit: %s\n", commit)
+	fmt.Printf("branch: %s\n", branch)
+	fmt.Printf("built: %s by %s\n", date, builtBy)
+	fmt.Printf("repo: %s\n", repo)
+	fmt.Printf("credits: Arran Ubels\n")
 }
