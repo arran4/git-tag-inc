@@ -6,7 +6,10 @@ Increments the version number and tags it. (You will need to push)
 
 ```
 ./git-tag-inc [major] [minor] [patch] [release] [alpha|beta|rc] [test|uat]
+--version
 ```
+
+Use `--version` to display build information and credits.
 
 `--mode arraneous` switches to the legacy naming (patch becomes `release`).
 
