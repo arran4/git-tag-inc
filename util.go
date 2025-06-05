@@ -4,31 +4,54 @@ import (
 	"strings"
 )
 
-func CommandsToFlags(args []string) (bool, bool, bool, bool, bool) {
-	test := false
-	uat := false
-	release := false
-	major := false
-	minor := false
-	d := 0
+type CmdFlags struct {
+	Major   bool
+	Minor   bool
+	Patch   bool
+	Release bool
+	Stage   string
+	Env     string
+	Valid   bool
+}
+
+func CommandsToFlags(args []string, mode string) CmdFlags {
+	c := CmdFlags{Valid: true}
 	for _, f := range args {
 		switch strings.ToLower(f) {
-		case "test":
-			test = true
-		case "uat":
-			uat = true
-		case "release":
-			release = true
 		case "major":
-			major = true
+			c.Major = true
 		case "minor":
-			minor = true
+			c.Minor = true
+		case "patch":
+			if mode == "arraneous" {
+				c.Valid = false
+				return c
+			}
+			c.Patch = true
+		case "release":
+			if mode == "arraneous" {
+				c.Patch = true
+			} else {
+				c.Release = true
+			}
+		case "alpha", "beta", "rc":
+			if c.Stage != "" {
+				c.Valid = false
+				return c
+			}
+			c.Stage = strings.ToLower(f)
+		case "test", "uat":
+			if c.Env != "" {
+				c.Valid = false
+				return c
+			}
+			c.Env = strings.ToLower(f)
 		default:
-			return false, false, false, false, false
+			c.Valid = false
+			return c
 		}
-		d++
 	}
-	return major, minor, release, uat, test
+	return c
 }
 
 func pi(i int) *int { return &i }

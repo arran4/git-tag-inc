@@ -16,6 +16,9 @@ var (
 	dry       = flag.Bool("dry", false, "Dry run")
 	ignore    = flag.Bool("ignore", true, "Ignore uncommitted files")
 	repeating = flag.Bool("repeating", false, "Allow new tags to repeat a previous")
+	// TODO: consider supporting other naming modes such as "xyzzy",
+	// "hybrid" or "octarine" which some teams use internally.
+	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
 )
 
 // nolint: gochecknoglobals
@@ -28,6 +31,7 @@ var (
 
 func main() {
 	flag.Parse()
+	gittaginc.Mode = *mode
 	if !*verbose {
 		log.SetFlags(0)
 	}
@@ -55,8 +59,8 @@ func main() {
 		}
 	}
 
-	major, minor, release, uat, test := gittaginc.CommandsToFlags(flag.Args())
-	if !test && !uat && !release && !major && !minor {
+	flags := gittaginc.CommandsToFlags(flag.Args(), *mode)
+	if !flags.Valid || (!flags.Major && !flags.Minor && !flags.Patch && !flags.Release && flags.Env == "" && flags.Stage == "") {
 		Usage()
 		return
 	}
@@ -65,7 +69,7 @@ func main() {
 		panic(err)
 	}
 	if !*repeating && currentHash != "" {
-		lastSimilar := FindHighestSimilarVersionTag(r, test, uat)
+		lastSimilar := FindHighestSimilarVersionTag(r, flags.Env)
 		if lastSimilar != nil {
 			lastSimilarHash, err := GetHash(r, lastSimilar)
 			if err != nil {
@@ -88,7 +92,7 @@ func main() {
 
 	log.Printf("Largest: %s (%s)", highest, currentHash)
 
-	highest.Increment(major, minor, release, uat, test)
+	highest.Increment(flags.Major, flags.Minor, flags.Patch, flags.Stage, flags.Env, flags.Release)
 
 	log.Printf("Creating %s", highest)
 
@@ -137,15 +141,15 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 	}
 }
 
-func FindHighestSimilarVersionTag(r *git.Repository, test bool, uat bool) *gittaginc.Tag {
+func FindHighestSimilarVersionTag(r *git.Repository, env string) *gittaginc.Tag {
 	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
-		if test && current.Test == nil {
+		if env == "test" && current.Test == nil {
 			return false
 		}
-		if uat && current.Uat == nil {
+		if env == "uat" && current.Uat == nil {
 			return false
 		}
-		if !uat && !test && (current.Uat != nil || current.Test != nil) {
+		if env == "" && (current.Uat != nil || current.Test != nil) {
 			return false
 		}
 		return last.LessThan(current)
@@ -188,13 +192,23 @@ func Usage() {
 	log.Printf("git-tag-inc then, one or more of: ")
 	log.Printf("  - major        => v0.0.1-test1 => v1.0.0       ")
 	log.Printf("  - minor        => v0.0.1-test1 => v0.1.0       ")
-	log.Printf("  - release      => v0.0.1-test1 => v0.0.2       ")
+	patchName := "patch"
+	if gittaginc.Mode == "arraneous" {
+		patchName = "release"
+	}
+	log.Printf("  - %s        => v0.0.1-test1 => v0.0.2       ", patchName)
+	if gittaginc.Mode != "arraneous" {
+		log.Printf("  - release      => v0.0.1-test1 => v0.0.1-test2 ")
+		log.Printf("  - release      => v0.0.1 => v0.0.1.1")
+	}
 	log.Printf("  - test         => v0.0.1-test1 => v0.0.1-test2 ")
-	log.Printf("  - test         => v0.0.1-uat1  => v0.0.1-test2 ")
-	log.Printf("  - uat          => v0.0.1-test3 => v0.0.1-uat3  ")
-	log.Printf("  - uat          => v0.0.1-uat1  => v0.0.1-uat2  ")
+	log.Printf("  - uat          => v0.0.1-uat1 => v0.0.1-uat2  ")
+	log.Printf("  - alpha        => v0.0.1-alpha1 => v0.0.1-alpha2 ")
+	log.Printf("  - beta         => v0.0.1-beta1 => v0.0.1-beta2 ")
+	log.Printf("  - rc           => v0.0.1-rc1 => v0.0.1-rc2 ")
 	log.Printf("Combinations work:")
-	log.Printf("  - release test => v0.0.1-test1 => v0.1.0-test1  ")
+	log.Printf("  - patch test   => v0.0.1-test1 => v0.1.0-test1  ")
 	log.Printf("Duplications don't:")
 	log.Printf("  - test test    => v0.0.1-test1 => v0.0.1-test2  ")
+	log.Printf("Use --mode arraneous to switch to legacy naming")
 }
