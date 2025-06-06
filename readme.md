@@ -79,3 +79,12 @@ $ git-tag-inc.exe release
 Largest: v1.1.1-test1
 Creating v1.1.1-test1.1
 ```
+
+## Manual page
+
+The repository contains a pre-built manual at `man/git-tag-inc.1`.
+If you install `go-md2man` you can regenerate it from the Markdown source:
+
+```bash
+go-md2man -in=man/git-tag-inc.md -out=man/git-tag-inc.1
+```

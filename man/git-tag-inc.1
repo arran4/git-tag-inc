@@ -1,0 +1,86 @@
+.TH GIT-TAG-INC 1 "2025-06-05" "git-tag-inc 1.1.6" "User Commands"
+.\" Generated from git-tag-inc.md using go-md2man
+.SH NAME
+git-tag-inc \- increment git version tags
+.SH SYNOPSIS
+.B git-tag-inc
+.RI [ options ]
+.RI [ command ... ]
+.SH DESCRIPTION
+.B git-tag-inc
+increments semantic version numbers and creates new Git tags. It detects
+existing tags in the repository and bumps the version according to the
+given commands.
+.PP
+Stages such as \fBalpha\fP, \fBbeta\fP and \fBrc\fP are supported, as
+well as environments \fBtest\fP and \fBuat\fP.
+.SH COMMANDS
+.TP
+.B major
+Increment the major version (resets minor and patch).
+.TP
+.B minor
+Increment the minor version (resets patch).
+.TP
+.B patch
+Increment the patch version.
+.TP
+.B release
+Increment the release number. When \fB--mode arraneous\fP is used, this
+is equivalent to \fBpatch\fP.
+.TP
+.B alpha | beta | rc
+Start or bump the named prerelease stage.
+.TP
+.B test | uat
+Start or bump the named environment counter.
+.SH OPTIONS
+.TP
+.B --verbose
+Enable verbose output.
+.TP
+.B --version
+Display build information and credits.
+.TP
+.B --dry
+Show the tag that would be created without creating it.
+.TP
+.B --ignore
+Ignore uncommitted files in the repository (default).
+.TP
+.B --repeating
+Allow new tags to repeat the previous commit hash.
+.TP
+.B --mode=MODE
+Select the naming mode. \fBdefault\fP uses \fIpatch\fP and \fIrelease\fP
+numbers. \fBarraneous\fP replaces \fIpatch\fP with \fIrelease\fP to match
+legacy versions.
+.SH EXAMPLES
+.PP
+Create a new test tag based on the highest existing version:
+.PP
+.nf
+$ git-tag-inc test
+.fi
+.PP
+Bump minor version and create an alpha prerelease:
+.PP
+.nf
+$ git-tag-inc minor alpha
+.fi
+.PP
+Bump patch and create a UAT tag:
+.PP
+.nf
+$ git-tag-inc patch uat
+.fi
+.PP
+Perform multiple increments at once:
+.PP
+.nf
+$ git-tag-inc minor major test
+.fi
+.SH SEE ALSO
+.BR git-tag (1)
+.SH AUTHOR
+Arran Ubels <arran@ubels.com.au>
