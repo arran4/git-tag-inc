@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -16,11 +17,12 @@ import (
 )
 
 var (
-	verbose     = flag.Bool("verbose", false, "Extra output")
-	showVersion = flag.Bool("version", false, "Print version information")
-	dry         = flag.Bool("dry", false, "Dry run")
-	ignore      = flag.Bool("ignore", true, "Ignore uncommitted files")
-	repeating   = flag.Bool("repeating", false, "Allow new tags to repeat a previous")
+	verbose          = flag.Bool("verbose", false, "Extra output")
+	showVersion      = flag.Bool("version", false, "Print version information")
+	dry              = flag.Bool("dry", false, "Dry run")
+	printVersionOnly = flag.Bool("print-version-only", false, "Print next version only")
+	ignore           = flag.Bool("ignore", true, "Ignore uncommitted files")
+	repeating        = flag.Bool("repeating", false, "Allow new tags to repeat a previous")
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
 	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
@@ -38,6 +40,10 @@ var (
 
 func main() {
 	flag.Parse()
+	if *printVersionOnly {
+		*dry = true
+		log.SetOutput(io.Discard)
+	}
 	if *showVersion {
 		printVersion()
 		return
@@ -122,6 +128,10 @@ func main() {
 	highest.Increment(flags.Major, flags.Minor, flags.Patch, flags.Stage, flags.Env, flags.Release)
 
 	log.Printf("Creating %s", highest)
+	if *printVersionOnly {
+		fmt.Println(highest.String())
+		return
+	}
 
 	h, err := r.Head()
 	if err != nil {

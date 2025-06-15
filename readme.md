@@ -6,10 +6,11 @@ Increments the version number and tags it. (You will need to push)
 
 ```
 ./git-tag-inc [major] [minor] [patch] [release] [alpha|beta|rc] [test|uat]
---version
+--version [--print-version-only]
 ```
 
 Use `--version` to display build information and credits.
+Use `--print-version-only` to output the next version without tagging.
 
 `--mode arraneous` switches to the legacy naming (patch becomes `release`).
 
