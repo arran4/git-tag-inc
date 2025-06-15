@@ -29,6 +29,7 @@ and `uat` are also available.
 - `--verbose` – print additional output
 - `--version` – show build information
 - `--dry` – display the tag that would be created
+- `--print-version-only` – display only the tag that would be created
 - `--ignore` – ignore uncommitted files (default)
 - `--repeating` – allow new tags to repeat the last commit hash
 - `--mode=MODE` – switch between `default` and `arraneous` naming
