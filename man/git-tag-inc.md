@@ -5,13 +5,17 @@
 
 ## Synopsis
 ```
-git-tag-inc [options] [command...]
+git-tag-inc [options] [command[<n>]...]
 ```
 
 ## Description
 `git-tag-inc` detects the highest semantic version tag in the repository and
 creates the next tag. Commands control which part of the version is bumped and
-which stage or environment counters are updated.
+which stage or environment counters are updated. Commands may include an
+optional numeric suffix (for example `test5`, `rc02`, `major3`) to set the next
+counter explicitly. If the requested number is lower than the current value the
+command fails unless either `--allow-backwards` is supplied or
+`--skip-forwards` is used to automatically bump the patch component first.
 
 Supported stages include `alpha`, `beta` and `rc`. Environment counters `test`
 and `uat` are also available.
@@ -32,6 +36,8 @@ and `uat` are also available.
 - `--print-version-only` – display only the tag that would be created
 - `--ignore` – ignore uncommitted files (default)
 - `--repeating` – allow new tags to repeat the last commit hash
+- `--allow-backwards` – allow numeric suffixes to decrease counters
+- `--skip-forwards` – bump the patch version when a numeric suffix decreases a counter
 - `--mode=MODE` – switch between `default` and `arraneous` naming
 
 ## Examples
@@ -57,6 +63,14 @@ Perform multiple increments at once:
 
 ```bash
 $ git-tag-inc minor major test
+```
+
+Set explicit counters and handle backwards numbers:
+
+```bash
+$ git-tag-inc test5
+$ git-tag-inc --allow-backwards test2
+$ git-tag-inc --skip-forwards release2
 ```
 
 ## See also

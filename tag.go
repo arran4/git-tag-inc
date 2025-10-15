@@ -26,6 +26,46 @@ type Tag struct {
 	Minor   int
 }
 
+func (t *Tag) Clone() *Tag {
+	if t == nil {
+		return nil
+	}
+	clone := &Tag{
+		StageName: t.StageName,
+		StagePad:  t.StagePad,
+		Pad:       t.Pad,
+		Patch:     t.Patch,
+		Major:     t.Major,
+		Minor:     t.Minor,
+	}
+	if t.Stage != nil {
+		v := *t.Stage
+		clone.Stage = &v
+	}
+	if t.Test != nil {
+		v := *t.Test
+		clone.Test = &v
+	}
+	if t.Uat != nil {
+		v := *t.Uat
+		clone.Uat = &v
+	}
+	if t.Release != nil {
+		v := *t.Release
+		clone.Release = &v
+	}
+	return clone
+}
+
+func (t *Tag) CopyFrom(other *Tag) {
+	if other == nil {
+		*t = Tag{}
+		return
+	}
+	clone := other.Clone()
+	*t = *clone
+}
+
 func stageRank(n string) int {
 	switch strings.ToLower(n) {
 	case "alpha":
@@ -163,94 +203,263 @@ func ParseTag(tag string) *Tag {
 	return t
 }
 
-func (t *Tag) Increment(major bool, minor bool, patch bool, stage string, env string, rel bool) {
+func (t *Tag) applyIncrement(flags CmdFlags) {
 	prevStage := t.Stage
-	prevStageName := t.StageName
+	prevStageName := strings.ToLower(t.StageName)
+	prevStagePad := t.StagePad
 	prevEnv := t.Uat
+	prevEnvType := "uat"
 	if prevEnv == nil {
 		prevEnv = t.Test
+		prevEnvType = "test"
 	}
-	if major {
-		t.Major++
+	if prevEnv == nil {
+		prevEnvType = ""
+	}
+	prevPad := t.Pad
+
+	if flags.Major {
+		target := t.Major + 1
+		if flags.MajorValue != nil {
+			target = *flags.MajorValue
+		}
+		t.Major = target
 		t.Minor = 0
 		t.Patch = 0
 		t.Release = nil
 		t.Stage = nil
 		t.StageName = ""
+		t.StagePad = 0
 		t.Uat = nil
 		t.Test = nil
 		prevStage = nil
+		prevStageName = ""
 		prevEnv = nil
+		prevEnvType = ""
 	}
-	if minor {
-		t.Minor++
+	if flags.Minor {
+		target := t.Minor + 1
+		if flags.MinorValue != nil {
+			target = *flags.MinorValue
+		}
+		t.Minor = target
 		t.Patch = 0
 		t.Release = nil
 		t.Stage = nil
 		t.StageName = ""
+		t.StagePad = 0
 		t.Uat = nil
 		t.Test = nil
 		prevStage = nil
+		prevStageName = ""
 		prevEnv = nil
+		prevEnvType = ""
 	}
-	if patch {
-		if (t.Test == nil || env != "") && (t.Uat == nil || env != "") && (t.Stage == nil || stage != "") {
-			t.Patch += 1
+	if flags.Patch {
+		target := t.Patch
+		if flags.PatchValue != nil {
+			target = *flags.PatchValue
+		} else if (t.Test == nil || flags.Env != "") && (t.Uat == nil || flags.Env != "") && (t.Stage == nil || flags.Stage != "") {
+			target = t.Patch + 1
 		}
+		t.Patch = target
 		t.Stage = nil
 		t.StageName = ""
+		t.StagePad = 0
 		t.Uat = nil
 		t.Test = nil
 		t.Release = nil
 		prevStage = nil
+		prevStageName = ""
 		prevEnv = nil
+		prevEnvType = ""
 	}
-	if stage != "" {
+	if flags.Stage != "" {
+		stageName := strings.ToLower(flags.Stage)
+		stagePad := 2
+		if flags.StageDigits > 0 {
+			stagePad = flags.StageDigits
+		} else if prevStage != nil && prevStageName == stageName && prevStagePad > 0 {
+			stagePad = prevStagePad
+		}
 		z := 1
-		if prevStage != nil && prevStageName == stage {
+		if flags.StageValue != nil {
+			z = *flags.StageValue
+		} else if prevStage != nil && prevStageName == stageName {
 			z = *prevStage + 1
-		} else if !major && !minor && !patch {
+		} else if !flags.Major && !flags.Minor && !flags.Patch {
 			t.Patch += 1
 		}
-		t.Stage = &z
-		t.StagePad = 2
-		t.StageName = stage
+		t.Stage = pi(z)
+		t.StagePad = stagePad
+		t.StageName = stageName
 		prevEnv = nil
+		prevEnvType = ""
+		prevPad = 0
 		t.Uat = nil
 		t.Test = nil
 		t.Release = nil
 	}
 
-	if env != "" {
+	if flags.Env != "" {
+		envName := strings.ToLower(flags.Env)
+		envPad := 2
+		if flags.EnvDigits > 0 {
+			envPad = flags.EnvDigits
+		} else if prevEnv != nil && prevPad > 0 {
+			envPad = prevPad
+		}
 		z := 1
 		if prevEnv != nil {
-			if t.Uat != nil && env == "uat" {
+			if prevEnvType == "uat" && envName == "uat" {
 				z = *prevEnv + 1
-			} else if t.Test != nil && env == "test" {
+			} else if prevEnvType == "test" && envName == "test" {
 				z = *prevEnv + 1
 			} else {
 				z = *prevEnv
 			}
-		} else if !major && !minor && !patch && stage == "" && prevStage == nil {
+		} else if !flags.Major && !flags.Minor && !flags.Patch && flags.Stage == "" && prevStage == nil {
 			t.Patch += 1
 		}
-		if env == "uat" {
-			t.Uat = &z
+		if flags.EnvValue != nil {
+			z = *flags.EnvValue
+		}
+		t.Pad = envPad
+		if envName == "uat" {
+			t.Uat = pi(z)
 			t.Test = nil
-		} else if env == "test" {
-			t.Test = &z
+		} else {
+			t.Test = pi(z)
 			t.Uat = nil
 		}
-		t.Pad = 2
 		t.Release = nil
 	}
 
-	if rel {
-		if t.Release != nil {
-			*t.Release = *t.Release + 1
-		} else {
-			v := 1
-			t.Release = &v
+	if flags.Release {
+		target := 1
+		if flags.ReleaseValue != nil {
+			target = *flags.ReleaseValue
+		} else if t.Release != nil {
+			target = *t.Release + 1
+		}
+		t.Release = pi(target)
+	}
+}
+
+func (t *Tag) Increment(flags CmdFlags, allowBackwards bool, skipForwards bool) error {
+	original := t.Clone()
+	if original == nil {
+		return fmt.Errorf("no tag to increment")
+	}
+
+	currentFlags := flags
+	t.applyIncrement(currentFlags)
+
+	decreases := detectDecreases(original, t, currentFlags)
+	if len(decreases) == 0 {
+		if allowBackwards {
+			return nil
+		}
+		if original.String() == t.String() {
+			newTag := t.String()
+			t.CopyFrom(original)
+			return fmt.Errorf("resulting tag %s is unchanged from previous", newTag)
+		}
+		return nil
+	}
+
+	if allowBackwards {
+		return nil
+	}
+
+	if skipForwards && !flags.Major && !flags.Minor && !flags.Patch {
+		t.CopyFrom(original)
+		autoFlags := flags
+		autoFlags.Patch = true
+		autoFlags.PatchValue = pi(original.Patch + 1)
+		currentFlags = autoFlags
+		t.applyIncrement(currentFlags)
+		decreases = detectDecreases(original, t, currentFlags)
+		if len(decreases) == 0 {
+			return nil
 		}
 	}
+
+	newTag := t.String()
+	originalTag := original.String()
+	msg := formatDecreases(decreases)
+	t.CopyFrom(original)
+	return fmt.Errorf("%s; use --allow-backwards to force (previous %s, requested %s)", msg, originalTag, newTag)
+}
+
+type decrease struct {
+	component string
+	previous  int
+	current   int
+}
+
+func envInfo(tag *Tag) (string, *int) {
+	if tag.Uat != nil {
+		return "uat", tag.Uat
+	}
+	if tag.Test != nil {
+		return "test", tag.Test
+	}
+	return "", nil
+}
+
+func detectDecreases(original, current *Tag, flags CmdFlags) []decrease {
+	var result []decrease
+
+	if flags.MajorValue != nil && *flags.MajorValue < original.Major {
+		result = append(result, decrease{component: "major", previous: original.Major, current: *flags.MajorValue})
+	}
+
+	if flags.MinorValue != nil && current.Major == original.Major && *flags.MinorValue < original.Minor {
+		result = append(result, decrease{component: "minor", previous: original.Minor, current: *flags.MinorValue})
+	}
+
+	if flags.PatchValue != nil && current.Major == original.Major && current.Minor == original.Minor && *flags.PatchValue < original.Patch {
+		result = append(result, decrease{component: "patch", previous: original.Patch, current: *flags.PatchValue})
+	}
+
+	baseSame := current.Major == original.Major && current.Minor == original.Minor && current.Patch == original.Patch
+
+	if flags.StageValue != nil && baseSame {
+		stageName := strings.ToLower(flags.Stage)
+		if stageName != "" && original.Stage != nil && current.Stage != nil && strings.ToLower(original.StageName) == stageName {
+			if *current.Stage < *original.Stage {
+				result = append(result, decrease{component: stageName, previous: *original.Stage, current: *current.Stage})
+			}
+		}
+	}
+
+	if flags.EnvValue != nil && baseSame {
+		envName := strings.ToLower(flags.Env)
+		if envName != "" {
+			origEnvName, origEnvVal := envInfo(original)
+			currEnvName, currEnvVal := envInfo(current)
+			if origEnvVal != nil && currEnvVal != nil && origEnvName == envName && currEnvName == envName {
+				if *currEnvVal < *origEnvVal {
+					result = append(result, decrease{component: envName, previous: *origEnvVal, current: *currEnvVal})
+				}
+			}
+		}
+	}
+
+	if flags.ReleaseValue != nil && baseSame && original.Release != nil && current.Release != nil {
+		if *current.Release < *original.Release {
+			result = append(result, decrease{component: "release", previous: *original.Release, current: *current.Release})
+		}
+	}
+
+	return result
+}
+
+func formatDecreases(decreases []decrease) string {
+	parts := make([]string, 0, len(decreases))
+	for _, d := range decreases {
+		parts = append(parts, fmt.Sprintf("%s from %d to %d", d.component, d.previous, d.current))
+	}
+	return fmt.Sprintf("numeric argument(s) went backwards: %s", strings.Join(parts, ", "))
 }
