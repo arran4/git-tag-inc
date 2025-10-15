@@ -84,7 +84,8 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 			c.Stage = name
 			if value != nil {
 				c.StageValue = value
-				c.StageDigits = len(m[2])
+				digits := len(m[2])
+				c.StageDigits = digits
 			}
 		case "test", "uat":
 			if c.Env != "" {
@@ -94,7 +95,8 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 			c.Env = name
 			if value != nil {
 				c.EnvValue = value
-				c.EnvDigits = len(m[2])
+				digits := len(m[2])
+				c.EnvDigits = digits
 			}
 		default:
 			c.Valid = false

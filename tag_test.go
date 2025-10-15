@@ -85,8 +85,14 @@ func TestIncrement(t *testing.T) {
 		{"change stage", "v1.1.1-alpha02", []string{"beta"}, "v1.1.2-beta01"},
 		{"release bump", "v1.1.1-alpha01-test01", []string{"release"}, "v1.1.1-alpha01-test01.1"},
 		{"release again", "v1.1.1-alpha01-test01.1", []string{"release"}, "v1.1.1-alpha01-test01.2"},
-		{"explicit env", "v1.1.1-test02", []string{"test5"}, "v1.1.1-test5"},
-		{"explicit stage new base", "v1.1.1-rc03", []string{"patch", "rc2"}, "v1.1.2-rc2"},
+		{"explicit env", "v1.1.1-test02", []string{"test5"}, "v1.1.1-test05"},
+		{"new env single digit defaults", "v1.1.0", []string{"test2"}, "v1.1.1-test02"},
+		{"env retains existing width", "v1.1.0-test004", []string{"test5"}, "v1.1.0-test005"},
+		{"env without padding stays unpadded", "v1.1.0-test3", []string{"test"}, "v1.1.0-test4"},
+		{"switch env single digit defaults", "v1.1.0-test02", []string{"uat2"}, "v1.1.0-uat02"},
+		{"explicit stage new base", "v1.1.1-rc03", []string{"patch", "rc2"}, "v1.1.2-rc02"},
+		{"stage retains existing width", "v1.1.0-rc004", []string{"rc5"}, "v1.1.0-rc005"},
+		{"new stage single digit defaults", "v1.1.0", []string{"rc2"}, "v1.1.0-rc02"},
 		{"explicit release", "v1.1.1-test01.3", []string{"release5"}, "v1.1.1-test01.5"},
 		{"explicit major", "v1.1.1", []string{"major5"}, "v5.0.0"},
 		{"explicit minor", "v5.0.0", []string{"minor7"}, "v5.7.0"},
@@ -179,7 +185,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		if err := skip.Increment(backwards, false, true); err != nil {
 			t.Fatalf("skip forwards returned error: %v", err)
 		}
-		if got := skip.String(); got != "v1.0.1-test2" {
+		if got := skip.String(); got != "v1.0.1-test02" {
 			t.Fatalf("skip forwards produced %s", got)
 		}
 
@@ -187,7 +193,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		if err := withRelease.Increment(backwards, false, true); err != nil {
 			t.Fatalf("skip forwards with release returned error: %v", err)
 		}
-		if got := withRelease.String(); got != "v1.0.1-test2" {
+		if got := withRelease.String(); got != "v1.0.1-test02" {
 			t.Fatalf("skip forwards with release produced %s", got)
 		}
 	})
@@ -209,7 +215,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		if err := skipStage.Increment(stageFlags, false, true); err != nil {
 			t.Fatalf("skip forwards stage returned error: %v", err)
 		}
-		if got := skipStage.String(); got != "v1.0.1-rc2" {
+		if got := skipStage.String(); got != "v1.0.1-rc02" {
 			t.Fatalf("skip forwards stage produced %s", got)
 		}
 	})
@@ -293,6 +299,14 @@ func TestCommandsToFlags(t *testing.T) {
 	}
 	if numbers.StageValue == nil || *numbers.StageValue != 3 || numbers.StageDigits != 2 {
 		t.Fatalf("expected stage numeric parsing %#v", numbers)
+	}
+	envDigits := CommandsToFlags([]string{"test2"}, "default")
+	if envDigits.EnvValue == nil || *envDigits.EnvValue != 2 || envDigits.EnvDigits != 1 {
+		t.Fatalf("expected env digits default padding %#v", envDigits)
+	}
+	stageDigits := CommandsToFlags([]string{"rc2"}, "default")
+	if stageDigits.StageValue == nil || *stageDigits.StageValue != 2 || stageDigits.StageDigits != 1 {
+		t.Fatalf("expected stage digits default padding %#v", stageDigits)
 	}
 	if numbers.PatchValue == nil || *numbers.PatchValue != 42 {
 		t.Fatalf("expected patch numeric parsing %#v", numbers)

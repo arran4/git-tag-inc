@@ -277,10 +277,24 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 	if flags.Stage != "" {
 		stageName := strings.ToLower(flags.Stage)
 		stagePad := 2
-		if flags.StageDigits > 0 {
-			stagePad = flags.StageDigits
-		} else if prevStage != nil && prevStageName == stageName && prevStagePad > 0 {
+		sameStage := prevStage != nil && prevStageName == stageName
+		if sameStage {
 			stagePad = prevStagePad
+		}
+		if flags.StageDigits > 0 {
+			requestedPad := flags.StageDigits
+			if sameStage {
+				if requestedPad > stagePad {
+					stagePad = requestedPad
+				}
+			} else {
+				if requestedPad > stagePad {
+					stagePad = requestedPad
+				} else if requestedPad >= stagePad {
+					stagePad = requestedPad
+				}
+				// otherwise keep the default width of 2 when starting a new stage with single digits
+			}
 		}
 		z := 1
 		if flags.StageValue != nil {
@@ -304,10 +318,24 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 	if flags.Env != "" {
 		envName := strings.ToLower(flags.Env)
 		envPad := 2
-		if flags.EnvDigits > 0 {
-			envPad = flags.EnvDigits
-		} else if prevEnv != nil && prevPad > 0 {
+		sameEnv := prevEnv != nil && prevEnvType == envName
+		if sameEnv {
 			envPad = prevPad
+		}
+		if flags.EnvDigits > 0 {
+			requestedPad := flags.EnvDigits
+			if sameEnv {
+				if requestedPad > envPad {
+					envPad = requestedPad
+				}
+			} else {
+				if requestedPad > envPad {
+					envPad = requestedPad
+				} else if requestedPad >= envPad {
+					envPad = requestedPad
+				}
+				// otherwise keep the default width of 2 when starting a new environment with single digits
+			}
 		}
 		z := 1
 		if prevEnv != nil {
