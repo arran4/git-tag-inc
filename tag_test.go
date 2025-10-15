@@ -85,11 +85,19 @@ func TestIncrement(t *testing.T) {
 		{"change stage", "v1.1.1-alpha02", []string{"beta"}, "v1.1.2-beta01"},
 		{"release bump", "v1.1.1-alpha01-test01", []string{"release"}, "v1.1.1-alpha01-test01.1"},
 		{"release again", "v1.1.1-alpha01-test01.1", []string{"release"}, "v1.1.1-alpha01-test01.2"},
+		{"explicit env", "v1.1.1-test02", []string{"test5"}, "v1.1.1-test5"},
+		{"explicit stage new base", "v1.1.1-rc03", []string{"patch", "rc2"}, "v1.1.2-rc2"},
+		{"explicit release", "v1.1.1-test01.3", []string{"release5"}, "v1.1.1-test01.5"},
+		{"explicit major", "v1.1.1", []string{"major5"}, "v5.0.0"},
+		{"explicit minor", "v5.0.0", []string{"minor7"}, "v5.7.0"},
+		{"explicit patch", "v5.7.0", []string{"patch9"}, "v5.7.9"},
 	}
 	for _, tt := range tests {
 		tag := ParseTag(tt.start)
 		flags := CommandsToFlags(tt.cmds, "default")
-		tag.Increment(flags.Major, flags.Minor, flags.Patch, flags.Stage, flags.Env, flags.Release)
+		if err := tag.Increment(flags, false, false); err != nil {
+			t.Fatalf("unexpected error incrementing %s with %v: %v", tt.start, tt.cmds, err)
+		}
 		if got := tag.String(); got != tt.expected {
 			t.Errorf("%s Increment(%v) got %s want %s", tt.start, tt.cmds, got, tt.expected)
 		}
@@ -139,11 +147,135 @@ func TestIncrementSequence(t *testing.T) {
 	}
 	for i, cmds := range seq {
 		f := CommandsToFlags(cmds, "default")
-		tag.Increment(f.Major, f.Minor, f.Patch, f.Stage, f.Env, f.Release)
+		if err := tag.Increment(f, false, false); err != nil {
+			t.Fatalf("step %d unexpected error: %v", i, err)
+		}
 		if got := tag.String(); got != wants[i] {
 			t.Fatalf("step %d got %s want %s", i, got, wants[i])
 		}
 	}
+}
+
+func TestIncrementBackwardsProtection(t *testing.T) {
+	t.Run("env counters", func(t *testing.T) {
+		original := ParseTag("v1.0.0-test3")
+		backwards := CommandsToFlags([]string{"test2"}, "default")
+		if err := original.Increment(backwards, false, false); err == nil {
+			t.Fatalf("expected error when decrementing without flags")
+		}
+		if got := original.String(); got != "v1.0.0-test3" {
+			t.Fatalf("tag mutated on error got %s", got)
+		}
+
+		allow := ParseTag("v1.0.0-test3")
+		if err := allow.Increment(backwards, true, false); err != nil {
+			t.Fatalf("allow backwards returned error: %v", err)
+		}
+		if got := allow.String(); got != "v1.0.0-test2" {
+			t.Fatalf("allow backwards produced %s", got)
+		}
+
+		skip := ParseTag("v1.0.0-test3")
+		if err := skip.Increment(backwards, false, true); err != nil {
+			t.Fatalf("skip forwards returned error: %v", err)
+		}
+		if got := skip.String(); got != "v1.0.1-test2" {
+			t.Fatalf("skip forwards produced %s", got)
+		}
+
+		withRelease := ParseTag("v1.0.0-test3.1")
+		if err := withRelease.Increment(backwards, false, true); err != nil {
+			t.Fatalf("skip forwards with release returned error: %v", err)
+		}
+		if got := withRelease.String(); got != "v1.0.1-test2" {
+			t.Fatalf("skip forwards with release produced %s", got)
+		}
+	})
+
+	t.Run("stages", func(t *testing.T) {
+		stage := ParseTag("v1.0.0-rc3")
+		stageFlags := CommandsToFlags([]string{"rc2"}, "default")
+		if err := stage.Increment(stageFlags, false, false); err == nil {
+			t.Fatalf("expected error when decrementing stage without flags")
+		}
+		allowStage := ParseTag("v1.0.0-rc3")
+		if err := allowStage.Increment(stageFlags, true, false); err != nil {
+			t.Fatalf("allow backwards stage returned error: %v", err)
+		}
+		if got := allowStage.String(); got != "v1.0.0-rc2" {
+			t.Fatalf("allow backwards stage produced %s", got)
+		}
+		skipStage := ParseTag("v1.0.0-rc3")
+		if err := skipStage.Increment(stageFlags, false, true); err != nil {
+			t.Fatalf("skip forwards stage returned error: %v", err)
+		}
+		if got := skipStage.String(); got != "v1.0.1-rc2" {
+			t.Fatalf("skip forwards stage produced %s", got)
+		}
+	})
+
+	t.Run("core version numbers", func(t *testing.T) {
+		patchFlags := CommandsToFlags([]string{"patch3"}, "default")
+		patch := ParseTag("v2.3.4")
+		if err := patch.Increment(patchFlags, false, false); err == nil {
+			t.Fatalf("expected patch decrement error")
+		}
+		if err := patch.Increment(patchFlags, true, false); err != nil {
+			t.Fatalf("allow patch decrement failed: %v", err)
+		}
+		if got := patch.String(); got != "v2.3.3" {
+			t.Fatalf("allow patch decrement produced %s", got)
+		}
+
+		minorFlags := CommandsToFlags([]string{"minor1"}, "default")
+		minor := ParseTag("v2.3.4")
+		if err := minor.Increment(minorFlags, false, false); err == nil {
+			t.Fatalf("expected minor decrement error")
+		}
+		if err := minor.Increment(minorFlags, true, false); err != nil {
+			t.Fatalf("allow minor decrement failed: %v", err)
+		}
+		if got := minor.String(); got != "v2.1.0" {
+			t.Fatalf("allow minor decrement produced %s", got)
+		}
+
+		majorFlags := CommandsToFlags([]string{"major1"}, "default")
+		major := ParseTag("v3.0.0")
+		if err := major.Increment(majorFlags, false, false); err == nil {
+			t.Fatalf("expected major decrement error")
+		}
+		if err := major.Increment(majorFlags, true, false); err != nil {
+			t.Fatalf("allow major decrement failed: %v", err)
+		}
+		if got := major.String(); got != "v1.0.0" {
+			t.Fatalf("allow major decrement produced %s", got)
+		}
+
+		releaseFlags := CommandsToFlags([]string{"release2"}, "default")
+		release := ParseTag("v1.2.3-test3.5")
+		if err := release.Increment(releaseFlags, false, false); err == nil {
+			t.Fatalf("expected release decrement error")
+		}
+		if err := release.Increment(releaseFlags, true, false); err != nil {
+			t.Fatalf("allow release decrement failed: %v", err)
+		}
+		if got := release.String(); got != "v1.2.3-test3.2" {
+			t.Fatalf("allow release decrement produced %s", got)
+		}
+
+		skipRelease := ParseTag("v1.2.3-test3.5")
+		if err := skipRelease.Increment(releaseFlags, false, true); err != nil {
+			t.Fatalf("skip release decrement returned error: %v", err)
+		}
+		if got := skipRelease.String(); got != "v1.2.4.2" {
+			t.Fatalf("skip release decrement produced %s", got)
+		}
+
+		skipPatch := ParseTag("v2.3.4")
+		if err := skipPatch.Increment(patchFlags, false, true); err == nil {
+			t.Fatalf("skip forwards should not allow patch decrement when patch provided")
+		}
+	})
 }
 
 func TestCommandsToFlags(t *testing.T) {
@@ -154,6 +286,22 @@ func TestCommandsToFlags(t *testing.T) {
 	combo := CommandsToFlags([]string{"patch", "release"}, "default")
 	if !combo.Patch || !combo.Release || !combo.Valid {
 		t.Fatalf("combo parsing failed %#v", combo)
+	}
+	numbers := CommandsToFlags([]string{"test12", "rc03", "patch42", "major10", "minor5", "release7"}, "default")
+	if numbers.EnvValue == nil || *numbers.EnvValue != 12 || numbers.EnvDigits != 2 {
+		t.Fatalf("expected env numeric parsing %#v", numbers)
+	}
+	if numbers.StageValue == nil || *numbers.StageValue != 3 || numbers.StageDigits != 2 {
+		t.Fatalf("expected stage numeric parsing %#v", numbers)
+	}
+	if numbers.PatchValue == nil || *numbers.PatchValue != 42 {
+		t.Fatalf("expected patch numeric parsing %#v", numbers)
+	}
+	if numbers.MajorValue == nil || *numbers.MajorValue != 10 || numbers.MinorValue == nil || *numbers.MinorValue != 5 {
+		t.Fatalf("expected major/minor numeric parsing %#v", numbers)
+	}
+	if numbers.ReleaseValue == nil || *numbers.ReleaseValue != 7 {
+		t.Fatalf("expected release numeric parsing %#v", numbers)
 	}
 	arr := CommandsToFlags([]string{"release", "uat"}, "arraneous")
 	if !arr.Patch || arr.Env != "uat" || !arr.Valid {

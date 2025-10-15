@@ -23,6 +23,8 @@ var (
 	printVersionOnly = flag.Bool("print-version-only", false, "Print next version only")
 	ignore           = flag.Bool("ignore", true, "Ignore uncommitted files")
 	repeating        = flag.Bool("repeating", false, "Allow new tags to repeat a previous")
+	allowBackwards   = flag.Bool("allow-backwards", false, "Allow numeric arguments to decrease version counters")
+	skipForwards     = flag.Bool("skip-forwards", false, "Automatically bump the patch when numeric arguments go backwards")
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
 	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
@@ -125,7 +127,10 @@ func main() {
 
 	log.Printf("Largest: %s (%s)", highest, currentHash)
 
-	highest.Increment(flags.Major, flags.Minor, flags.Patch, flags.Stage, flags.Env, flags.Release)
+	if err := highest.Increment(flags, *allowBackwards, *skipForwards); err != nil {
+		log.Printf("%v", err)
+		os.Exit(1)
+	}
 
 	log.Printf("Creating %s", highest)
 	if *printVersionOnly {
@@ -228,6 +233,12 @@ func Usage() {
 	flag.Usage()
 	log.Printf("You're using this wrong")
 	log.Printf("git-tag-inc then, one or more of: ")
+	log.Printf("Commands accept optional digits: e.g. test5, rc02, major3")
+	log.Printf("Use --allow-backwards to accept lower numbers or --skip-forwards to bump the patch automatically")
+	log.Printf("Examples:")
+	log.Printf("  git-tag-inc test5              => v1.2.3-test5 (sets the exact counter)")
+	log.Printf("  git-tag-inc --allow-backwards test2 => allow lowering to test2 explicitly")
+	log.Printf("  git-tag-inc --skip-forwards test2  => bump patch first, then apply test2")
 	log.Printf("  - major        => v0.0.1-test1 => v1.0.0       ")
 	log.Printf("  - minor        => v0.0.1-test1 => v0.1.0       ")
 	patchName := "patch"
