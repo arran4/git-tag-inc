@@ -41,6 +41,7 @@ var (
 )
 
 func main() {
+	flag.Usage = Usage
 	flag.Parse()
 	if *printVersionOnly {
 		*dry = true
@@ -230,36 +231,54 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 }
 
 func Usage() {
-	flag.Usage()
-	log.Printf("You're using this wrong")
-	log.Printf("git-tag-inc then, one or more of: ")
-	log.Printf("Commands accept optional digits: e.g. test5, rc02, major3")
-	log.Printf("Use --allow-backwards to accept lower numbers or --skip-forwards to bump the patch automatically")
-	log.Printf("Examples:")
-	log.Printf("  git-tag-inc test5              => v1.2.3-test5 (sets the exact counter)")
-	log.Printf("  git-tag-inc --allow-backwards test2 => allow lowering to test2 explicitly")
-	log.Printf("  git-tag-inc --skip-forwards test2  => bump patch first, then apply test2")
-	log.Printf("  - major        => v0.0.1-test1 => v1.0.0       ")
-	log.Printf("  - minor        => v0.0.1-test1 => v0.1.0       ")
+	log.Printf("Usage of git-tag-inc:")
+	log.Printf("./git-tag-inc [--allow-backwards] [--skip-forwards] [major[<n>]] [minor[<n>]] [patch[<n>]] [release[<n>]] [alpha|beta|rc[<n>]] [test|uat[<n>]]")
+	log.Printf("--version [--print-version-only]")
+	log.Printf("")
+	log.Printf("Use --version to display build information and credits.")
+	log.Printf("Use --print-version-only to output the next version without tagging.")
+	log.Printf("")
+	log.Printf("--mode arraneous switches to the legacy naming (patch becomes `release`).")
+	log.Printf("")
+	log.Printf("Numeric suffixes can be added to any command to set a specific counter. For example,")
+	log.Printf("`test5` produces `-test5`, `rc02` produces `-rc02` and `major3` moves directly to")
+	log.Printf("`v3.0.0`. When a numeric suffix would decrease a counter compared to the previous tag")
+	log.Printf("the command fails unless either `--allow-backwards` is provided or `--skip-forwards`")
+	log.Printf("is used. `--allow-backwards` applies the requested number directly, while")
+	log.Printf("`--skip-forwards` automatically bumps the patch component first so the resulting tag")
+	log.Printf("still increases. For instance, `git-tag-inc --skip-forwards test2` upgrades")
+	log.Printf("`v1.0.0-test3` to `v1.0.1-test2`.")
+	log.Printf("")
+	log.Printf("git-tag-inc then, one or more of:")
+	log.Printf("* `major        => v0.0.1-test1 => v1.0.0`")
+	log.Printf("* `minor        => v0.0.1-test1 => v0.1.0`")
 	patchName := "patch"
 	if gittaginc.Mode == "arraneous" {
 		patchName = "release"
 	}
-	log.Printf("  - %s        => v0.0.1-test1 => v0.0.2       ", patchName)
+	log.Printf("* `%s        => v0.0.1-test1 => v0.0.2`", patchName)
 	if gittaginc.Mode != "arraneous" {
-		log.Printf("  - release      => v0.0.1-test1 => v0.0.1-test2 ")
-		log.Printf("  - release      => v0.0.1 => v0.0.1.1")
+		log.Printf("* `release      => v0.0.1-test1 => v0.0.1-test2`")
+		log.Printf("* `release      => v0.0.1 => v0.0.1.1`")
 	}
-	log.Printf("  - test         => v0.0.1-test1 => v0.0.1-test2 ")
-	log.Printf("  - uat          => v0.0.1-uat1 => v0.0.1-uat2  ")
-	log.Printf("  - alpha        => v0.0.1-alpha1 => v0.0.1-alpha2 ")
-	log.Printf("  - beta         => v0.0.1-beta1 => v0.0.1-beta2 ")
-	log.Printf("  - rc           => v0.0.1-rc1 => v0.0.1-rc2 ")
+	log.Printf("* `test         => v0.0.1-test1 => v0.0.1-test2`")
+	log.Printf("* `uat          => v0.0.1-uat1  => v0.0.1-uat2`")
+	log.Printf("* `alpha        => v0.0.1-alpha1 => v0.0.1-alpha2`")
+	log.Printf("* `beta         => v0.0.1-beta1  => v0.0.1-beta2`")
+	log.Printf("* `rc           => v0.0.1-rc1    => v0.0.1-rc2`")
+	log.Printf("* `rc5          => v0.0.1-rc1    => v0.0.1-rc5`")
+	log.Printf("* `major4       => v0.0.1        => v4.0.0`")
+	log.Printf("")
 	log.Printf("Combinations work:")
-	log.Printf("  - patch test   => v0.0.1-test1 => v0.1.0-test1  ")
+	log.Printf("* `patch test   => v0.0.1-test1 => v0.1.0-test1`")
+	log.Printf("* `patch rc2    => v0.1.0-rc4  => v0.1.1-rc2`")
+	log.Printf("")
+	log.Printf("Preventing backwards moves:")
+	log.Printf("* `test1` (when the last tag was `test3`) errors unless `--allow-backwards` is supplied.")
+	log.Printf("* `--skip-forwards test1` turns the same command into `vX.Y.(Z+1)-test1` automatically.")
+	log.Printf("")
 	log.Printf("Duplications don't:")
-	log.Printf("  - test test    => v0.0.1-test1 => v0.0.1-test2  ")
-	log.Printf("Use --mode arraneous to switch to legacy naming")
+	log.Printf("* `test test    => v0.0.1-test1 => v0.0.1-test2`")
 }
 
 func printVersion() {
