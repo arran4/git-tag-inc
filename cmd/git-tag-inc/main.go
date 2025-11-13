@@ -41,6 +41,7 @@ var (
 )
 
 func main() {
+	flag.Usage = Usage
 	flag.Parse()
 	if *printVersionOnly {
 		*dry = true
@@ -230,7 +231,6 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 }
 
 func Usage() {
-	flag.Usage()
 	log.Printf("Usage of git-tag-inc:")
 	log.Printf("./git-tag-inc [--allow-backwards] [--skip-forwards] [major[<n>]] [minor[<n>]] [patch[<n>]] [release[<n>]] [alpha|beta|rc[<n>]] [test|uat[<n>]]")
 	log.Printf("--version [--print-version-only]")
