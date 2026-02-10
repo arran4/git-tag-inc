@@ -3,7 +3,7 @@ module github.com/arran4/git-tag-inc
 go 1.24.0
 
 require (
-	github.com/go-git/go-git/v5 v5.16.1
+	github.com/go-git/go-git/v5 v5.16.5
 	github.com/pkg/errors v0.9.1
 )
 
