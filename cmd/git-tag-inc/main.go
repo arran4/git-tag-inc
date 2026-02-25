@@ -97,7 +97,7 @@ func main() {
 			panic(err)
 		}
 		if !s.IsClean() {
-			log.Printf("There are uncommited changes in thils repo.")
+			log.Printf("There are uncommitted changes in this repo.")
 			os.Exit(1)
 			return
 		}
