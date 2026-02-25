@@ -26,9 +26,7 @@ var (
 	allowBackwards   = flag.Bool("allow-backwards", false, "Allow numeric arguments to decrease version counters")
 	skipForwards     = flag.Bool("skip-forwards", false, "Automatically bump the patch when numeric arguments go backwards")
 	force            = flag.Bool("force", false, "Force the operation (implies --allow-backwards, --repeating, --ignore)")
-	// TODO: consider supporting other naming modes such as "xyzzy",
-	// "hybrid" or "octarine" which some teams use internally.
-	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
+	mode             = flag.String("mode", "default", "Naming mode: default or arraneous")
 )
 
 // nolint: gochecknoglobals
