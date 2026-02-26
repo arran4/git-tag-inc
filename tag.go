@@ -322,7 +322,7 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		} else if !flags.Major && !flags.Minor && !flags.Patch {
 			t.Patch += 1
 		}
-		t.Stage = pi(z)
+		t.Stage = new(z)
 		t.StagePad = stagePad
 		t.StageName = stageName
 		prevEnv = nil
@@ -372,10 +372,10 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		}
 		t.Pad = envPad
 		if envName == "uat" {
-			t.Uat = pi(z)
+			t.Uat = new(z)
 			t.Test = nil
 		} else {
-			t.Test = pi(z)
+			t.Test = new(z)
 			t.Uat = nil
 		}
 		t.Release = nil
@@ -388,7 +388,7 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		} else if t.Release != nil {
 			target = *t.Release + 1
 		}
-		t.Release = pi(target)
+		t.Release = new(target)
 	}
 }
 
@@ -422,7 +422,7 @@ func (t *Tag) Increment(flags CmdFlags, allowBackwards bool, skipForwards bool) 
 		t.CopyFrom(original)
 		autoFlags := flags
 		autoFlags.Patch = true
-		autoFlags.PatchValue = pi(original.Patch + 1)
+		autoFlags.PatchValue = new(original.Patch + 1)
 		currentFlags = autoFlags
 		t.applyIncrement(currentFlags)
 		decreases = detectDecreases(original, t, currentFlags)

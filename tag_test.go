@@ -23,13 +23,13 @@ func TestParseTag(t *testing.T) {
 		{"v1.0.0-beta01-foo01", nil},
 		{"v1.0.0-unknown1", nil},
 		{"v1.2.3", &Tag{Major: 1, Minor: 2, Patch: 3}},
-		{"v1.2.3-test45", &Tag{Major: 1, Minor: 2, Patch: 3, Test: pi(45), Pad: 2}},
-		{"v1.2.3-uat0045", &Tag{Major: 1, Minor: 2, Patch: 3, Uat: pi(45), Pad: 4}},
-		{"v1.2.3-alpha1", &Tag{Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: pi(1), StagePad: 0}},
-		{"v1.2.3-beta02-test03", &Tag{Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: pi(2), StagePad: 2, Test: pi(3), Pad: 2}},
-		{"v1.0.0-rc01-test02", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: pi(1), StagePad: 2, Test: pi(2), Pad: 2}},
-		{"v1.0.0-beta007-uat012", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: pi(7), StagePad: 3, Uat: pi(12), Pad: 3}},
-		{"v1.0.0-beta1-test2.3", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: pi(1), StagePad: 0, Test: pi(2), Pad: 0, Release: pi(3)}},
+		{"v1.2.3-test45", &Tag{Major: 1, Minor: 2, Patch: 3, Test: new(45), Pad: 2}},
+		{"v1.2.3-uat0045", &Tag{Major: 1, Minor: 2, Patch: 3, Uat: new(45), Pad: 4}},
+		{"v1.2.3-alpha1", &Tag{Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: new(1), StagePad: 0}},
+		{"v1.2.3-beta02-test03", &Tag{Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
+		{"v1.0.0-rc01-test02", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, Test: new(2), Pad: 2}},
+		{"v1.0.0-beta007-uat012", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, Uat: new(12), Pad: 3}},
+		{"v1.0.0-beta1-test2.3", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, Test: new(2), Pad: 0, Release: new(3)}},
 	}
 	for _, tt := range tests {
 		got := ParseTag(tt.tag)
@@ -50,11 +50,11 @@ func TestString(t *testing.T) {
 	}{
 		{&Tag{Major: 0, Minor: 0, Patch: 0}, "v0.0.0"},
 		{&Tag{Major: 1, Minor: 2, Patch: 3}, "v1.2.3"},
-		{&Tag{Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: pi(1), StagePad: 2}, "v1.0.0-rc01"},
-		{&Tag{Major: 0, Minor: 1, Patch: 2, Test: pi(3), Pad: 2}, "v0.1.2-test03"},
-		{&Tag{Major: 2, Minor: 3, Patch: 4, StageName: "beta", Stage: pi(2), StagePad: 2, Uat: pi(1), Pad: 2}, "v2.3.4-beta02-uat01"},
-		{&Tag{Major: 5, Minor: 6, Patch: 7, StageName: "beta", Stage: pi(2), StagePad: 3, Test: pi(10), Pad: 3}, "v5.6.7-beta002-test010"},
-		{&Tag{Major: 1, Minor: 0, Patch: 1, StageName: "alpha", Stage: pi(1), StagePad: 2, Test: pi(1), Pad: 2, Release: pi(2)}, "v1.0.1-alpha01-test01.2"},
+		{&Tag{Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2}, "v1.0.0-rc01"},
+		{&Tag{Major: 0, Minor: 1, Patch: 2, Test: new(3), Pad: 2}, "v0.1.2-test03"},
+		{&Tag{Major: 2, Minor: 3, Patch: 4, StageName: "beta", Stage: new(2), StagePad: 2, Uat: new(1), Pad: 2}, "v2.3.4-beta02-uat01"},
+		{&Tag{Major: 5, Minor: 6, Patch: 7, StageName: "beta", Stage: new(2), StagePad: 3, Test: new(10), Pad: 3}, "v5.6.7-beta002-test010"},
+		{&Tag{Major: 1, Minor: 0, Patch: 1, StageName: "alpha", Stage: new(1), StagePad: 2, Test: new(1), Pad: 2, Release: new(2)}, "v1.0.1-alpha01-test01.2"},
 	}
 	for _, tt := range cases {
 		if got := tt.tag.String(); got != tt.want {
@@ -354,13 +354,13 @@ func TestTag_Clone(t *testing.T) {
 	t.Run("deep copy", func(t *testing.T) {
 		original := &Tag{
 			StageName: "beta",
-			Stage:     pi(1),
+			Stage:     new(1),
 			StagePad:  2,
-			Test:      pi(2),
-			Uat:       pi(3),
+			Test:      new(2),
+			Uat:       new(3),
 			Pad:       4,
 			Patch:     5,
-			Release:   pi(6),
+			Release:   new(6),
 			Major:     7,
 			Minor:     8,
 		}

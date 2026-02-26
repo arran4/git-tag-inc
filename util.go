@@ -44,7 +44,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.Valid = false
 				return c
 			}
-			value = pi(v)
+			value = new(v)
 		}
 		switch name {
 		case "major":
@@ -107,5 +107,3 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 	}
 	return c
 }
-
-func pi(i int) *int { return &i }
