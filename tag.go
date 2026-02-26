@@ -24,6 +24,8 @@ type Tag struct {
 	Release *int
 	Major   int
 	Minor   int
+
+	Hash string
 }
 
 func (t *Tag) Clone() *Tag {
@@ -37,6 +39,7 @@ func (t *Tag) Clone() *Tag {
 		Patch:     t.Patch,
 		Major:     t.Major,
 		Minor:     t.Minor,
+		Hash:      t.Hash,
 	}
 	if t.Stage != nil {
 		v := *t.Stage
