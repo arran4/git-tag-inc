@@ -50,7 +50,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.Valid = false
 				return c
 			}
-			value = new(v)
+			value = &v
 		}
 		switch name {
 		case "major":

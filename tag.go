@@ -14,6 +14,10 @@ import (
 	"sync"
 )
 
+func ptr(i int) *int {
+	return &i
+}
+
 type Tag struct {
 	Hash string
 
@@ -328,7 +332,7 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		} else if !flags.Major && !flags.Minor && !flags.Patch {
 			t.Patch += 1
 		}
-		t.Stage = new(z)
+		t.Stage = ptr(z)
 		t.StagePad = stagePad
 		t.StageName = stageName
 		prevEnv = nil
@@ -378,10 +382,10 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		}
 		t.Pad = envPad
 		if envName == "uat" {
-			t.Uat = new(z)
+			t.Uat = ptr(z)
 			t.Test = nil
 		} else {
-			t.Test = new(z)
+			t.Test = ptr(z)
 			t.Uat = nil
 		}
 		t.Release = nil
@@ -394,7 +398,7 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		} else if t.Release != nil {
 			target = *t.Release + 1
 		}
-		t.Release = new(target)
+		t.Release = ptr(target)
 	}
 }
 
@@ -428,7 +432,7 @@ func (t *Tag) Increment(flags CmdFlags, allowBackwards bool, skipForwards bool) 
 		t.CopyFrom(original)
 		autoFlags := flags
 		autoFlags.Patch = true
-		autoFlags.PatchValue = new(original.Patch + 1)
+		autoFlags.PatchValue = ptr(original.Patch + 1)
 		currentFlags = autoFlags
 		t.applyIncrement(currentFlags)
 		decreases = detectDecreases(original, t, currentFlags)
