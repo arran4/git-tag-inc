@@ -317,7 +317,7 @@ func TestCommandsToFlags(t *testing.T) {
 	if numbers.ReleaseValue == nil || *numbers.ReleaseValue != 7 {
 		t.Fatalf("expected release numeric parsing %#v", numbers)
 	}
-	arr := CommandsToFlags([]string{"release", "uat"}, "arraneous")
+	arr := CommandsToFlags([]string{"release", "uat"}, ModeArraneous)
 	if !arr.Patch || arr.Env != "uat" || !arr.Valid {
 		t.Fatalf("arraneous parsing failed %#v", arr)
 	}
@@ -333,7 +333,7 @@ func TestCommandsToFlags(t *testing.T) {
 	if !relOnly.Release || !relOnly.Valid {
 		t.Fatalf("release only failed %#v", relOnly)
 	}
-	wrong2 := CommandsToFlags([]string{"patch"}, "arraneous")
+	wrong2 := CommandsToFlags([]string{"patch"}, ModeArraneous)
 	if wrong2.Valid {
 		t.Fatalf("expected invalid patch in arraneous")
 	}
