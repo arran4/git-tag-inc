@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -29,7 +30,11 @@ func TestMain_NoGitRepo(t *testing.T) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	exePath := filepath.Join(tempDir, "git-tag-inc")
+	exeName := "git-tag-inc"
+	if runtime.GOOS == "windows" {
+		exeName += ".exe"
+	}
+	exePath := filepath.Join(tempDir, exeName)
 	cmdBuild := exec.Command("go", "build", "-o", exePath, ".")
 	if out, err := cmdBuild.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build git-tag-inc: %v\nOutput: %s", err, out)
