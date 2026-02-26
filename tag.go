@@ -175,18 +175,34 @@ func ParseTag(tag string) *Tag {
 	if len(m) == 0 {
 		return nil
 	}
-	t.Major, _ = strconv.Atoi(m[1])
-	t.Minor, _ = strconv.Atoi(m[2])
-	t.Patch, _ = strconv.Atoi(m[3])
+	var err error
+	t.Major, err = strconv.Atoi(m[1])
+	if err != nil {
+		return nil
+	}
+	t.Minor, err = strconv.Atoi(m[2])
+	if err != nil {
+		return nil
+	}
+	t.Patch, err = strconv.Atoi(m[3])
+	if err != nil {
+		return nil
+	}
 	if m[4] != "" {
 		t.StageName = strings.ToLower(m[4])
 		t.StagePad = len(m[5])
-		v, _ := strconv.Atoi(m[6])
+		v, err := strconv.Atoi(m[6])
+		if err != nil {
+			return nil
+		}
 		t.Stage = &v
 	}
 	if m[7] != "" {
 		t.Pad = len(m[8])
-		v, _ := strconv.Atoi(m[9])
+		v, err := strconv.Atoi(m[9])
+		if err != nil {
+			return nil
+		}
 		switch strings.ToLower(m[7]) {
 		case "test":
 			t.Test = &v
@@ -197,7 +213,10 @@ func ParseTag(tag string) *Tag {
 		}
 	}
 	if len(m) >= 11 && m[10] != "" {
-		v, _ := strconv.Atoi(m[10])
+		v, err := strconv.Atoi(m[10])
+		if err != nil {
+			return nil
+		}
 		t.Release = &v
 	}
 	return t

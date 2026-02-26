@@ -338,3 +338,25 @@ func TestCommandsToFlags(t *testing.T) {
 		t.Fatalf("expected invalid patch in arraneous")
 	}
 }
+
+func TestParseTagOverflow(t *testing.T) {
+	// A value larger than int64 max (9223372036854775807)
+	// 10000000000000000000 is 1e19, which is larger than 9e18.
+	overflowTag := "v10000000000000000000.0.0"
+	tag := ParseTag(overflowTag)
+	if tag != nil {
+		t.Errorf("Expected ParseTag(%q) to return nil due to overflow, but got: %v", overflowTag, tag)
+	}
+
+	overflowMinor := "v1.10000000000000000000.0"
+	tag = ParseTag(overflowMinor)
+	if tag != nil {
+		t.Errorf("Expected ParseTag(%q) to return nil due to overflow, but got: %v", overflowMinor, tag)
+	}
+
+	overflowPatch := "v1.0.10000000000000000000"
+	tag = ParseTag(overflowPatch)
+	if tag != nil {
+		t.Errorf("Expected ParseTag(%q) to return nil due to overflow, but got: %v", overflowPatch, tag)
+	}
+}
