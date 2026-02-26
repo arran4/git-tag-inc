@@ -169,13 +169,19 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 	var ref *plumbing.Reference
 	var to *object.Tag
 	if lastSimilar != nil {
-		ref, err = r.Tag(lastSimilar.String())
-		if err == git.ErrTagNotFound {
-			return "", nil
-		} else if err != nil {
-			return "", err
+		var hash plumbing.Hash
+		if lastSimilar.Hash != "" {
+			hash = plumbing.NewHash(lastSimilar.Hash)
+		} else {
+			ref, err = r.Tag(lastSimilar.String())
+			if err == git.ErrTagNotFound {
+				return "", nil
+			} else if err != nil {
+				return "", err
+			}
+			hash = ref.Hash()
 		}
-		to, err = r.TagObject(ref.Hash())
+		to, err = r.TagObject(hash)
 		if err == git.ErrTagNotFound {
 			return "", nil
 		} else if err != nil {
@@ -228,6 +234,7 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 		if t == nil {
 			return nil
 		}
+		t.Hash = ref.Hash().String()
 		if stop(highest, t) {
 			highest = t
 		}
