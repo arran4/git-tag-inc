@@ -68,7 +68,8 @@ func main() {
 	}
 	r, err := git.PlainOpen(".")
 	if err != nil {
-		panic(err)
+		log.Printf("Error opening git repository: %v", err)
+		os.Exit(1)
 	}
 
 	cfg, cfgErr := r.ConfigScoped(config.SystemScope)
@@ -90,11 +91,13 @@ func main() {
 	if !*ignore {
 		wt, err := r.Worktree()
 		if err != nil {
-			panic(err)
+			log.Printf("Error getting worktree: %v", err)
+			os.Exit(1)
 		}
 		s, err := wt.Status()
 		if err != nil {
-			panic(err)
+			log.Printf("Error getting worktree status: %v", err)
+			os.Exit(1)
 		}
 		if !s.IsClean() {
 			log.Printf("There are uncommited changes in thils repo.")
@@ -110,17 +113,23 @@ func main() {
 	}
 	currentHash, err := GetHash(r, nil)
 	if err != nil {
-		panic(err)
+		log.Printf("Error getting current hash: %v", err)
+		os.Exit(1)
 	}
 	if !*repeating && currentHash != "" {
-		lastSimilar := FindHighestSimilarVersionTag(r, flags.Env)
+		lastSimilar, err := FindHighestSimilarVersionTag(r, flags.Env)
+		if err != nil {
+			log.Printf("Error finding highest similar version tag: %v", err)
+			os.Exit(1)
+		}
 		if lastSimilar != nil {
 			lastSimilarHash, err := GetHash(r, lastSimilar)
 			if err != nil {
 				switch {
 				case errors.Is(err, plumbing.ErrObjectNotFound):
 				default:
-					panic(err)
+					log.Printf("Error getting hash: %v", err)
+					os.Exit(1)
 				}
 			} else {
 				if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
@@ -132,7 +141,11 @@ func main() {
 		}
 	}
 
-	highest := FindHighestVersionTag(r)
+	highest, err := FindHighestVersionTag(r)
+	if err != nil {
+		log.Printf("Error finding highest version tag: %v", err)
+		os.Exit(1)
+	}
 
 	log.Printf("Largest: %s (%s)", highest, currentHash)
 
@@ -149,7 +162,8 @@ func main() {
 
 	h, err := r.Head()
 	if err != nil {
-		panic(err)
+		log.Printf("Error getting head: %v", err)
+		os.Exit(1)
 	}
 	if !*dry {
 		_, err = r.CreateTag(highest.String(), h.Hash(), &git.CreateTagOptions{
@@ -160,7 +174,8 @@ func main() {
 		log.Printf("Dry run finished.")
 	}
 	if err != nil {
-		panic(err)
+		log.Printf("Error creating tag: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -193,7 +208,7 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 	}
 }
 
-func FindHighestSimilarVersionTag(r *git.Repository, env string) *gittaginc.Tag {
+func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag, error) {
 	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		if env == "test" && current.Test == nil {
 			return false
@@ -208,16 +223,16 @@ func FindHighestSimilarVersionTag(r *git.Repository, env string) *gittaginc.Tag 
 	})
 }
 
-func FindHighestVersionTag(r *git.Repository) *gittaginc.Tag {
+func FindHighestVersionTag(r *git.Repository) (*gittaginc.Tag, error) {
 	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		return last.LessThan(current)
 	})
 }
 
-func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) bool) *gittaginc.Tag {
+func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) bool) (*gittaginc.Tag, error) {
 	iter, err := r.Tags()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	var highest *gittaginc.Tag = &gittaginc.Tag{}
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
@@ -233,9 +248,9 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 		}
 		return nil
 	}); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return highest
+	return highest, nil
 }
 
 func Usage() {
