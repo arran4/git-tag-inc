@@ -66,19 +66,29 @@ func (t *Tag) CopyFrom(other *Tag) {
 	*t = *clone
 }
 
-func stageRank(n string) int {
+type stageRankType int
+
+const (
+	rankAlpha   stageRankType = 0
+	rankBeta    stageRankType = 1
+	rankRC      stageRankType = 2
+	rankRelease stageRankType = 3
+	rankOther   stageRankType = 4
+)
+
+func stageRank(n string) stageRankType {
 	switch strings.ToLower(n) {
 	case "alpha":
-		return 0
+		return rankAlpha
 	case "beta":
-		return 1
+		return rankBeta
 	case "rc":
-		return 2
+		return rankRC
 	default:
 		if n == "" {
-			return 3
+			return rankRelease
 		}
-		return 4
+		return rankOther
 	}
 }
 
