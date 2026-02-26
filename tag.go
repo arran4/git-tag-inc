@@ -12,6 +12,8 @@ import (
 var Mode string
 
 type Tag struct {
+	Hash string
+
 	StageName string
 	Stage     *int
 	StagePad  int
@@ -31,6 +33,7 @@ func (t *Tag) Clone() *Tag {
 		return nil
 	}
 	clone := &Tag{
+		Hash:      t.Hash,
 		StageName: t.StageName,
 		StagePad:  t.StagePad,
 		Pad:       t.Pad,
