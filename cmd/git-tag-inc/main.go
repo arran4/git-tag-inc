@@ -283,10 +283,13 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 func Usage() {
 	out := flag.CommandLine.Output()
 	var flags strings.Builder
-	oldOutput := flag.CommandLine.Output()
-	flag.CommandLine.SetOutput(&flags)
-	flag.PrintDefaults()
-	flag.CommandLine.SetOutput(oldOutput)
+	flag.VisitAll(func(f *flag.Flag) {
+		fmt.Fprintf(&flags, "  -%s", f.Name)
+		if f.DefValue != "" {
+			fmt.Fprintf(&flags, " (default %q)", f.DefValue)
+		}
+		fmt.Fprintf(&flags, "\n\t%s\n", f.Usage)
+	})
 
 	t := template.Must(template.New("usage").Parse(usageText))
 	data := struct {
