@@ -59,7 +59,6 @@ func main() {
 		printVersion()
 		return
 	}
-	gittaginc.Mode = *mode
 	if !*verbose {
 		log.SetFlags(0)
 	}
@@ -263,11 +262,11 @@ func Usage() {
 	fmt.Fprintf(out, "* `major        => v0.0.1-test1 => v1.0.0`\n")
 	fmt.Fprintf(out, "* `minor        => v0.0.1-test1 => v0.1.0`\n")
 	patchName := "patch"
-	if gittaginc.Mode == "arraneous" {
+	if *mode == "arraneous" {
 		patchName = "release"
 	}
 	fmt.Fprintf(out, "* `%s        => v0.0.1-test1 => v0.0.2`\n", patchName)
-	if gittaginc.Mode != "arraneous" {
+	if *mode != "arraneous" {
 		fmt.Fprintf(out, "* `release      => v0.0.1-test1 => v0.0.1-test2`\n")
 		fmt.Fprintf(out, "* `release      => v0.0.1 => v0.0.1.1`\n")
 	}

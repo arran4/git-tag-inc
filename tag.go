@@ -7,10 +7,6 @@ import (
 	"strings"
 )
 
-// Mode controls which naming scheme to use.
-// Valid values: "default", "arraneous".
-var Mode string
-
 type Tag struct {
 	StageName string
 	Stage     *int
