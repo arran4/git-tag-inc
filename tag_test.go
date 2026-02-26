@@ -337,6 +337,10 @@ func TestCommandsToFlags(t *testing.T) {
 	if wrong2.Valid {
 		t.Fatalf("expected invalid patch in arraneous")
 	}
+	overflow := CommandsToFlags([]string{"major99999999999999999999"}, "default")
+	if overflow.Valid {
+		t.Fatalf("expected invalid major overflow")
+	}
 }
 
 func TestTag_Clone(t *testing.T) {
