@@ -338,3 +338,77 @@ func TestCommandsToFlags(t *testing.T) {
 		t.Fatalf("expected invalid patch in arraneous")
 	}
 }
+
+func TestTag_Clone(t *testing.T) {
+	t.Run("nil receiver", func(t *testing.T) {
+		var tag *Tag
+		if got := tag.Clone(); got != nil {
+			t.Errorf("expected nil clone for nil receiver, got %v", got)
+		}
+	})
+
+	t.Run("deep copy", func(t *testing.T) {
+		original := &Tag{
+			StageName: "beta",
+			Stage:     pi(1),
+			StagePad:  2,
+			Test:      pi(2),
+			Uat:       pi(3),
+			Pad:       4,
+			Patch:     5,
+			Release:   pi(6),
+			Major:     7,
+			Minor:     8,
+		}
+
+		clone := original.Clone()
+
+		if !reflect.DeepEqual(original, clone) {
+			t.Errorf("clone should be equal to original initially")
+		}
+
+		// modify clone values
+		clone.StageName = "alpha"
+		*clone.Stage = 99
+		clone.StagePad = 100
+		*clone.Test = 101
+		*clone.Uat = 102
+		clone.Pad = 103
+		clone.Patch = 104
+		*clone.Release = 105
+		clone.Major = 106
+		clone.Minor = 107
+
+		// check original values
+		if original.StageName != "beta" {
+			t.Errorf("original StageName modified")
+		}
+		if *original.Stage != 1 {
+			t.Errorf("original Stage modified")
+		}
+		if original.StagePad != 2 {
+			t.Errorf("original StagePad modified")
+		}
+		if *original.Test != 2 {
+			t.Errorf("original Test modified")
+		}
+		if *original.Uat != 3 {
+			t.Errorf("original Uat modified")
+		}
+		if original.Pad != 4 {
+			t.Errorf("original Pad modified")
+		}
+		if original.Patch != 5 {
+			t.Errorf("original Patch modified")
+		}
+		if *original.Release != 6 {
+			t.Errorf("original Release modified")
+		}
+		if original.Major != 7 {
+			t.Errorf("original Major modified")
+		}
+		if original.Minor != 8 {
+			t.Errorf("original Minor modified")
+		}
+	})
+}
