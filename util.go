@@ -1,3 +1,9 @@
+// Copyright (c) 2025, Arran Ubels
+// All rights reserved.
+//
+// This source code is licensed under the BSD-style license found in the
+// LICENSE file in the root directory of this source tree.
+
 package gittaginc
 
 import (
@@ -44,7 +50,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.Valid = false
 				return c
 			}
-			value = new(v)
+			value = &v
 		}
 		switch name {
 		case "major":

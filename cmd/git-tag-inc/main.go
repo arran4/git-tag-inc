@@ -1,3 +1,9 @@
+// Copyright (c) 2025, Arran Ubels
+// All rights reserved.
+//
+// This source code is licensed under the BSD-style license found in the
+// LICENSE file in the root directory of this source tree.
+
 package main
 
 import (
@@ -233,12 +239,14 @@ func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag
 		}
 		return last.LessThan(current)
 	})
+	return t, err
 }
 
 func FindHighestVersionTag(r *git.Repository) (*gittaginc.Tag, error) {
 	t, err := FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		return last.LessThan(current)
 	})
+	return t, err
 }
 
 func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) bool) (*gittaginc.Tag, error) {
