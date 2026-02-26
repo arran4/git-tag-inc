@@ -338,3 +338,59 @@ func TestCommandsToFlags(t *testing.T) {
 		t.Fatalf("expected invalid patch in arraneous")
 	}
 }
+
+func TestNamingModesDemo(t *testing.T) {
+	// This test demonstrates how different modes affect flag parsing.
+	// It covers the existing "default" and "arraneous" modes, and serves
+	// as a template for how future modes (like "hybrid" or "octarine")
+	// could be specified and tested.
+
+	tests := []struct {
+		mode          string
+		command       string
+		expectValid   bool
+		expectPatch   bool // Checks if it maps to Patch internally
+		expectRelease bool
+	}{
+		// Default mode:
+		// - 'patch' command sets Patch flag
+		// - 'release' command sets Release flag
+		{"default", "patch", true, true, false},
+		{"default", "release", true, false, true},
+
+		// Arraneous mode:
+		// - 'patch' command is invalid (legacy reasons)
+		// - 'release' command sets Patch flag (renaming behavior)
+		{"arraneous", "patch", false, false, false},
+		{"arraneous", "release", true, true, false},
+
+		// Future/Hypothetical modes (e.g. "hybrid", "octarine"):
+		// If implemented, one might expect behaviors like:
+		// {"hybrid", "patch", true, true, false},   // retains patch
+		// {"hybrid", "release", true, false, true}, // retains release
+		// {"octarine", "magic", true, ...},         // new commands?
+	}
+
+	for _, tt := range tests {
+		flags := CommandsToFlags([]string{tt.command}, tt.mode)
+
+		// 1. Verify Validity
+		if flags.Valid != tt.expectValid {
+			t.Errorf("Mode %q Command %q: expected valid=%v, got %v",
+				tt.mode, tt.command, tt.expectValid, flags.Valid)
+		}
+		if !flags.Valid {
+			continue
+		}
+
+		// 2. Verify Internal Mapping
+		if flags.Patch != tt.expectPatch {
+			t.Errorf("Mode %q Command %q: expected Patch=%v, got %v",
+				tt.mode, tt.command, tt.expectPatch, flags.Patch)
+		}
+		if flags.Release != tt.expectRelease {
+			t.Errorf("Mode %q Command %q: expected Release=%v, got %v",
+				tt.mode, tt.command, tt.expectRelease, flags.Release)
+		}
+	}
+}
