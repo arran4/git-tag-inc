@@ -113,7 +113,10 @@ func main() {
 		panic(err)
 	}
 	if !*repeating && currentHash != "" {
-		lastSimilar := FindHighestSimilarVersionTag(r, flags.Env)
+		lastSimilar, err := FindHighestSimilarVersionTag(r, flags.Env)
+		if err != nil {
+			panic(err)
+		}
 		if lastSimilar != nil {
 			lastSimilarHash, err := GetHash(r, lastSimilar)
 			if err != nil {
@@ -132,7 +135,10 @@ func main() {
 		}
 	}
 
-	highest := FindHighestVersionTag(r)
+	highest, err := FindHighestVersionTag(r)
+	if err != nil {
+		panic(err)
+	}
 
 	log.Printf("Largest: %s (%s)", highest, currentHash)
 
@@ -193,7 +199,7 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 	}
 }
 
-func FindHighestSimilarVersionTag(r *git.Repository, env string) *gittaginc.Tag {
+func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag, error) {
 	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		if env == "test" && current.Test == nil {
 			return false
@@ -208,16 +214,16 @@ func FindHighestSimilarVersionTag(r *git.Repository, env string) *gittaginc.Tag 
 	})
 }
 
-func FindHighestVersionTag(r *git.Repository) *gittaginc.Tag {
+func FindHighestVersionTag(r *git.Repository) (*gittaginc.Tag, error) {
 	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		return last.LessThan(current)
 	})
 }
 
-func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) bool) *gittaginc.Tag {
+func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) bool) (*gittaginc.Tag, error) {
 	iter, err := r.Tags()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	var highest *gittaginc.Tag = &gittaginc.Tag{}
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
@@ -233,9 +239,9 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 		}
 		return nil
 	}); err != nil {
-		panic(err)
+		return nil, err
 	}
-	return highest
+	return highest, nil
 }
 
 func Usage() {
