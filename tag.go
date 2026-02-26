@@ -457,47 +457,44 @@ func envInfo(tag *Tag) (string, *int) {
 func detectDecreases(original, current *Tag, flags CmdFlags) []decrease {
 	var result []decrease
 
-	if flags.MajorValue != nil && *flags.MajorValue < original.Major {
-		result = append(result, decrease{component: "major", previous: original.Major, current: *flags.MajorValue})
+	checkInt := func(component string, previous, current int, target *int, valid bool) {
+		if valid && target != nil && current < previous {
+			result = append(result, decrease{component: component, previous: previous, current: current})
+		}
 	}
 
-	if flags.MinorValue != nil && current.Major == original.Major && *flags.MinorValue < original.Minor {
-		result = append(result, decrease{component: "minor", previous: original.Minor, current: *flags.MinorValue})
-	}
-
-	if flags.PatchValue != nil && current.Major == original.Major && current.Minor == original.Minor && *flags.PatchValue < original.Patch {
-		result = append(result, decrease{component: "patch", previous: original.Patch, current: *flags.PatchValue})
-	}
-
-	baseSame := current.Major == original.Major && current.Minor == original.Minor && current.Patch == original.Patch
-
-	if flags.StageValue != nil && baseSame {
-		stageName := strings.ToLower(flags.Stage)
-		if stageName != "" && original.Stage != nil && current.Stage != nil && strings.ToLower(original.StageName) == stageName {
-			if *current.Stage < *original.Stage {
-				result = append(result, decrease{component: stageName, previous: *original.Stage, current: *current.Stage})
+	checkPtr := func(component string, previous, current *int, target *int, valid bool) {
+		if valid && target != nil && previous != nil && current != nil {
+			if *current < *previous {
+				result = append(result, decrease{component: component, previous: *previous, current: *current})
 			}
 		}
 	}
 
-	if flags.EnvValue != nil && baseSame {
+	checkInt("major", original.Major, current.Major, flags.MajorValue, true)
+	checkInt("minor", original.Minor, current.Minor, flags.MinorValue, current.Major == original.Major)
+	checkInt("patch", original.Patch, current.Patch, flags.PatchValue, current.Major == original.Major && current.Minor == original.Minor)
+
+	baseSame := current.Major == original.Major && current.Minor == original.Minor && current.Patch == original.Patch
+
+	if flags.StageValue != nil {
+		stageName := strings.ToLower(flags.Stage)
+		valid := baseSame && stageName != "" && original.Stage != nil && current.Stage != nil && strings.ToLower(original.StageName) == stageName
+		checkPtr(stageName, original.Stage, current.Stage, flags.StageValue, valid)
+	}
+
+	if flags.EnvValue != nil {
 		envName := strings.ToLower(flags.Env)
 		if envName != "" {
 			origEnvName, origEnvVal := envInfo(original)
 			currEnvName, currEnvVal := envInfo(current)
-			if origEnvVal != nil && currEnvVal != nil && origEnvName == envName && currEnvName == envName {
-				if *currEnvVal < *origEnvVal {
-					result = append(result, decrease{component: envName, previous: *origEnvVal, current: *currEnvVal})
-				}
-			}
+			valid := baseSame && origEnvVal != nil && currEnvVal != nil && origEnvName == envName && currEnvName == envName
+			checkPtr(envName, origEnvVal, currEnvVal, flags.EnvValue, valid)
 		}
 	}
 
-	if flags.ReleaseValue != nil && baseSame && original.Release != nil && current.Release != nil {
-		if *current.Release < *original.Release {
-			result = append(result, decrease{component: "release", previous: *original.Release, current: *current.Release})
-		}
-	}
+	validRelease := baseSame && original.Release != nil && current.Release != nil
+	checkPtr("release", original.Release, current.Release, flags.ReleaseValue, validRelease)
 
 	return result
 }
