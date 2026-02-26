@@ -338,3 +338,78 @@ func TestCommandsToFlags(t *testing.T) {
 		t.Fatalf("expected invalid patch in arraneous")
 	}
 }
+
+func TestDetectDecreases(t *testing.T) {
+	t.Run("major decrease", func(t *testing.T) {
+		orig := &Tag{Major: 2}
+		curr := &Tag{Major: 1}
+		flags := CmdFlags{MajorValue: pi(1)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 1 || decreases[0].component != "major" {
+			t.Errorf("expected major decrease, got %v", decreases)
+		}
+	})
+	t.Run("minor decrease", func(t *testing.T) {
+		orig := &Tag{Major: 1, Minor: 2}
+		curr := &Tag{Major: 1, Minor: 1}
+		flags := CmdFlags{MinorValue: pi(1)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 1 || decreases[0].component != "minor" {
+			t.Errorf("expected minor decrease, got %v", decreases)
+		}
+	})
+	t.Run("patch decrease", func(t *testing.T) {
+		orig := &Tag{Major: 1, Minor: 2, Patch: 3}
+		curr := &Tag{Major: 1, Minor: 2, Patch: 2}
+		flags := CmdFlags{PatchValue: pi(2)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 1 || decreases[0].component != "patch" {
+			t.Errorf("expected patch decrease, got %v", decreases)
+		}
+	})
+	t.Run("stage decrease", func(t *testing.T) {
+		orig := &Tag{Major: 1, StageName: "alpha", Stage: pi(2)}
+		curr := &Tag{Major: 1, StageName: "alpha", Stage: pi(1)}
+		flags := CmdFlags{Stage: "alpha", StageValue: pi(1)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 1 || decreases[0].component != "alpha" {
+			t.Errorf("expected stage decrease, got %v", decreases)
+		}
+	})
+	t.Run("env decrease", func(t *testing.T) {
+		orig := &Tag{Major: 1, Test: pi(2)}
+		curr := &Tag{Major: 1, Test: pi(1)}
+		flags := CmdFlags{Env: "test", EnvValue: pi(1)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 1 || decreases[0].component != "test" {
+			t.Errorf("expected env decrease, got %v", decreases)
+		}
+	})
+	t.Run("release decrease", func(t *testing.T) {
+		orig := &Tag{Major: 1, Release: pi(2)}
+		curr := &Tag{Major: 1, Release: pi(1)}
+		flags := CmdFlags{ReleaseValue: pi(1)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 1 || decreases[0].component != "release" {
+			t.Errorf("expected release decrease, got %v", decreases)
+		}
+	})
+	t.Run("no decrease if base changed", func(t *testing.T) {
+		orig := &Tag{Major: 1, Minor: 2, Patch: 3}
+		curr := &Tag{Major: 2, Minor: 1, Patch: 1} // Major increased
+		flags := CmdFlags{MinorValue: pi(1), PatchValue: pi(1)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 0 {
+			t.Errorf("expected no decreases due to base change, got %v", decreases)
+		}
+	})
+	t.Run("stage decrease ignored if stage name changed", func(t *testing.T) {
+		orig := &Tag{Major: 1, StageName: "alpha", Stage: pi(2)}
+		curr := &Tag{Major: 1, StageName: "beta", Stage: pi(1)}
+		flags := CmdFlags{Stage: "beta", StageValue: pi(1)}
+		decreases := detectDecreases(orig, curr, flags)
+		if len(decreases) != 0 {
+			t.Errorf("expected no decreases due to stage name change, got %v", decreases)
+		}
+	})
+}
