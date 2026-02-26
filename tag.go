@@ -167,10 +167,10 @@ func (t *Tag) String() string {
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
 
-var ParseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
+var parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
 
 func ParseTag(tag string) *Tag {
-	m := ParseTagRe.FindStringSubmatch(tag)
+	m := parseTagRe.FindStringSubmatch(tag)
 	t := &Tag{}
 	if len(m) == 0 {
 		return nil
