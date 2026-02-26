@@ -1,4 +1,8 @@
+Usage of {{.ProgramName}}:
+{{.ProgramName}} [--allow-backwards] [--skip-forwards] [major[<n>]] [minor[<n>]] [patch[<n>]] [release[<n>]] [alpha|beta|rc[<n>]] [test|uat[<n>]]
 
+Flags:
+{{.Flags}}
 Use --version to display build information and credits.
 Use --print-version-only to output the next version without tagging.
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"flag"
 	"fmt"
@@ -245,8 +246,11 @@ var usageText string
 
 func Usage() {
 	out := flag.CommandLine.Output()
-	fmt.Fprintf(out, "Usage of %s:\n%s [--allow-backwards] [--skip-forwards] [major[<n>]] [minor[<n>]] [patch[<n>]] [release[<n>]] [alpha|beta|rc[<n>]] [test|uat[<n>]]\n\nFlags:\n", os.Args[0], os.Args[0])
+
+	var buf bytes.Buffer
+	flag.CommandLine.SetOutput(&buf)
 	flag.PrintDefaults()
+	flag.CommandLine.SetOutput(out)
 
 	t, err := template.New("usage").Parse(usageText)
 	if err != nil {
@@ -254,10 +258,14 @@ func Usage() {
 	}
 
 	data := struct {
+		ProgramName  string
+		Flags        string
 		PatchName    string
 		ReleaseLines string
 	}{
-		PatchName: "patch",
+		ProgramName: os.Args[0],
+		Flags:       buf.String(),
+		PatchName:   "patch",
 	}
 
 	if gittaginc.Mode == "arraneous" {
