@@ -26,9 +26,7 @@ var (
 	allowBackwards   = flag.Bool("allow-backwards", false, "Allow numeric arguments to decrease version counters")
 	skipForwards     = flag.Bool("skip-forwards", false, "Automatically bump the patch when numeric arguments go backwards")
 	force            = flag.Bool("force", false, "Force the operation (implies --allow-backwards, --repeating, --ignore)")
-	// TODO: consider supporting other naming modes such as "xyzzy",
-	// "hybrid" or "octarine" which some teams use internally.
-	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
+	mode             = flag.String("mode", "default", "Naming mode: default or arraneous")
 )
 
 // nolint: gochecknoglobals
@@ -273,7 +271,7 @@ func Usage() {
 	fmt.Fprintf(out, "Use --version to display build information and credits.\n")
 	fmt.Fprintf(out, "Use --print-version-only to output the next version without tagging.\n")
 	fmt.Fprintf(out, "\n")
-	fmt.Fprintf(out, "--mode arraneous switches to the legacy naming (patch becomes `release`).\n")
+	fmt.Fprintf(out, "--mode %s switches to the legacy naming (patch becomes `release`).\n", gittaginc.ModeArraneous)
 	fmt.Fprintf(out, "\n")
 	fmt.Fprintf(out, "Numeric suffixes can be added to any command to set a specific counter. For example,\n")
 	fmt.Fprintf(out, "`test5` produces `-test5`, `rc02` produces `-rc02` and `major3` moves directly to\n")
@@ -288,11 +286,11 @@ func Usage() {
 	fmt.Fprintf(out, "* `major        => v0.0.1-test1 => v1.0.0`\n")
 	fmt.Fprintf(out, "* `minor        => v0.0.1-test1 => v0.1.0`\n")
 	patchName := "patch"
-	if *mode == "arraneous" {
+	if *mode == gittaginc.ModeArraneous {
 		patchName = "release"
 	}
 	fmt.Fprintf(out, "* `%s        => v0.0.1-test1 => v0.0.2`\n", patchName)
-	if *mode != "arraneous" {
+	if *mode != gittaginc.ModeArraneous {
 		fmt.Fprintf(out, "* `release      => v0.0.1-test1 => v0.0.1-test2`\n")
 		fmt.Fprintf(out, "* `release      => v0.0.1 => v0.0.1.1`\n")
 	}

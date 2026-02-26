@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const ModeArraneous = "arraneous"
+
 type CmdFlags struct {
 	Major        bool
 	MajorValue   *int
@@ -56,7 +58,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.MinorValue = value
 			}
 		case "patch":
-			if mode == "arraneous" {
+			if mode == ModeArraneous {
 				c.Valid = false
 				return c
 			}
@@ -65,7 +67,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.PatchValue = value
 			}
 		case "release":
-			if mode == "arraneous" {
+			if mode == ModeArraneous {
 				c.Patch = true
 				if value != nil {
 					c.PatchValue = value
