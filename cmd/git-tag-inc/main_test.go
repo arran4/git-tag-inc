@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"flag"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,7 +19,26 @@ func TestUsage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			oldOutput := flag.CommandLine.Output()
+			flag.CommandLine.SetOutput(&buf)
+			defer flag.CommandLine.SetOutput(oldOutput)
+
 			Usage()
+
+			output := buf.String()
+			expectedPhrases := []string{
+				"Usage of",
+				"Flags:",
+				"Combinations work:",
+				"Preventing backwards moves:",
+				"--mode arraneous switches to the legacy naming",
+			}
+			for _, phrase := range expectedPhrases {
+				if !strings.Contains(output, phrase) {
+					t.Errorf("Expected usage output to contain %q, but it didn't.", phrase)
+				}
+			}
 		})
 	}
 }
