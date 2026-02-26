@@ -62,7 +62,6 @@ func main() {
 		printVersion()
 		return
 	}
-	gittaginc.Mode = *mode
 	if !*verbose {
 		log.SetFlags(0)
 	}
@@ -71,7 +70,12 @@ func main() {
 	}
 	r, err := git.PlainOpen(".")
 	if err != nil {
-		panic(err)
+		if errors.Is(err, git.ErrRepositoryNotExists) {
+			log.Printf("Error: %v. Are you in a git repository?", err)
+		} else {
+			log.Printf("Error opening repository: %v", err)
+		}
+		os.Exit(1)
 	}
 
 	cfg, cfgErr := r.ConfigScoped(config.SystemScope)
@@ -93,11 +97,13 @@ func main() {
 	if !*ignore {
 		wt, err := r.Worktree()
 		if err != nil {
-			panic(err)
+			log.Printf("Failed to get worktree: %v", err)
+			os.Exit(1)
 		}
 		s, err := wt.Status()
 		if err != nil {
-			panic(err)
+			log.Printf("Failed to get worktree status: %v", err)
+			os.Exit(1)
 		}
 		if !s.IsClean() {
 			fmt.Fprintf(out, "There are uncommited changes in thils repo.\n")
@@ -113,12 +119,13 @@ func main() {
 	}
 	currentHash, err := GetHash(r, nil)
 	if err != nil {
-		panic(err)
+		log.Printf("Failed to get current hash: %v", err)
+		os.Exit(1)
 	}
 	if !*repeating && currentHash != "" {
 		lastSimilar, err := FindHighestSimilarVersionTag(r, flags.Env)
 		if err != nil {
-			fmt.Fprintf(out, "%v\n", err)
+			fmt.Fprintf(out, "Failed to find highest similar version tag: %v", err)
 			os.Exit(1)
 		}
 		if lastSimilar != nil {
@@ -127,7 +134,8 @@ func main() {
 				switch {
 				case errors.Is(err, plumbing.ErrObjectNotFound):
 				default:
-					panic(err)
+					log.Printf("Failed to get hash for similar version: %v", err)
+					os.Exit(1)
 				}
 			} else {
 				if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
@@ -141,7 +149,7 @@ func main() {
 
 	highest, err := FindHighestVersionTag(r)
 	if err != nil {
-		fmt.Fprintf(out, "%v\n", err)
+		fmt.Fprintf(out, "Failed to find highest version tag: %v", err)
 		os.Exit(1)
 	}
 
@@ -160,7 +168,8 @@ func main() {
 
 	h, err := r.Head()
 	if err != nil {
-		panic(err)
+		log.Printf("Failed to get HEAD: %v", err)
+		os.Exit(1)
 	}
 	if !*dry {
 		_, err = r.CreateTag(highest.String(), h.Hash(), &git.CreateTagOptions{
@@ -171,7 +180,8 @@ func main() {
 		fmt.Fprintf(out, "Dry run finished.\n")
 	}
 	if err != nil {
-		panic(err)
+		log.Printf("Failed to create tag: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -211,7 +221,7 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 }
 
 func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag, error) {
-	t, err := FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
+	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		if env == "test" && current.Test == nil {
 			return false
 		}
@@ -230,7 +240,7 @@ func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag
 }
 
 func FindHighestVersionTag(r *git.Repository) (*gittaginc.Tag, error) {
-	t, err := FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
+	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		return last.LessThan(current)
 	})
 	if err != nil {
@@ -274,7 +284,7 @@ func Usage() {
 	fmt.Fprintf(out, "Use --version to display build information and credits.\n")
 	fmt.Fprintf(out, "Use --print-version-only to output the next version without tagging.\n")
 	fmt.Fprintf(out, "\n")
-	fmt.Fprintf(out, "--mode arraneous switches to the legacy naming (patch becomes `release`).\n")
+	fmt.Fprintf(out, "--mode %s switches to the legacy naming (patch becomes `release`).\n", gittaginc.ModeArraneous)
 	fmt.Fprintf(out, "\n")
 	fmt.Fprintf(out, "Numeric suffixes can be added to any command to set a specific counter. For example,\n")
 	fmt.Fprintf(out, "`test5` produces `-test5`, `rc02` produces `-rc02` and `major3` moves directly to\n")
@@ -289,11 +299,11 @@ func Usage() {
 	fmt.Fprintf(out, "* `major        => v0.0.1-test1 => v1.0.0`\n")
 	fmt.Fprintf(out, "* `minor        => v0.0.1-test1 => v0.1.0`\n")
 	patchName := "patch"
-	if gittaginc.Mode == "arraneous" {
+	if *mode == gittaginc.ModeArraneous {
 		patchName = "release"
 	}
 	fmt.Fprintf(out, "* `%s        => v0.0.1-test1 => v0.0.2`\n", patchName)
-	if gittaginc.Mode != "arraneous" {
+	if *mode != gittaginc.ModeArraneous {
 		fmt.Fprintf(out, "* `release      => v0.0.1-test1 => v0.0.1-test2`\n")
 		fmt.Fprintf(out, "* `release      => v0.0.1 => v0.0.1.1`\n")
 	}
