@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Mode controls which naming scheme to use.
@@ -167,10 +168,18 @@ func (t *Tag) String() string {
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
 
-var parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
+var parseTagRe *regexp.Regexp
+var parseTagOnce sync.Once
+
+func getParseTagRe() *regexp.Regexp {
+	parseTagOnce.Do(func() {
+		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
+	})
+	return parseTagRe
+}
 
 func ParseTag(tag string) *Tag {
-	m := parseTagRe.FindStringSubmatch(tag)
+	m := getParseTagRe().FindStringSubmatch(tag)
 	t := &Tag{}
 	if len(m) == 0 {
 		return nil
