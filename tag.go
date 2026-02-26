@@ -5,13 +5,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
-// Mode controls which naming scheme to use.
-// Valid values: "default", "arraneous".
-var Mode string
-
 type Tag struct {
+	Hash string
+
 	StageName string
 	Stage     *int
 	StagePad  int
@@ -31,6 +30,7 @@ func (t *Tag) Clone() *Tag {
 		return nil
 	}
 	clone := &Tag{
+		Hash:      t.Hash,
 		StageName: t.StageName,
 		StagePad:  t.StagePad,
 		Pad:       t.Pad,
@@ -177,10 +177,18 @@ func (t *Tag) String() string {
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
 
-var ParseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
+var parseTagRe *regexp.Regexp
+var parseTagOnce sync.Once
+
+func getParseTagRe() *regexp.Regexp {
+	parseTagOnce.Do(func() {
+		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
+	})
+	return parseTagRe
+}
 
 func ParseTag(tag string) *Tag {
-	m := ParseTagRe.FindStringSubmatch(tag)
+	m := getParseTagRe().FindStringSubmatch(tag)
 	t := &Tag{}
 	if len(m) == 0 {
 		return nil

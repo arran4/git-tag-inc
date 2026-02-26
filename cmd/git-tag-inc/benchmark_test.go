@@ -68,7 +68,7 @@ func BenchmarkGetHash(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// We are benchmarking the sequence: Find tag, then GetHash
 		// This simulates the logic in main.go
-		highest := FindHighestVersionTag(r)
+		highest, _ := FindHighestVersionTag(r)
 		_, _ = GetHash(r, highest)
 	}
 }
@@ -127,7 +127,10 @@ func BenchmarkGetHashOnly(b *testing.B) {
 		}
 	}
 
-	highest := FindHighestVersionTag(r)
+	highest, err := FindHighestVersionTag(r)
+	if err != nil {
+		b.Fatal(err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
