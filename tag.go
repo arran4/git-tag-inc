@@ -439,27 +439,20 @@ func envInfo(tag *Tag) (string, *int) {
 func detectDecreases(original, current *Tag, flags CmdFlags) []decrease {
 	var result []decrease
 
-	if flags.MajorValue != nil && *flags.MajorValue < original.Major {
-		result = append(result, decrease{component: "major", previous: original.Major, current: *flags.MajorValue})
-	}
+	checkIntDecrease(&result, flags.MajorValue, original.Major, "major", true)
 
-	if flags.MinorValue != nil && current.Major == original.Major && *flags.MinorValue < original.Minor {
-		result = append(result, decrease{component: "minor", previous: original.Minor, current: *flags.MinorValue})
-	}
+	majorSame := current.Major == original.Major
+	checkIntDecrease(&result, flags.MinorValue, original.Minor, "minor", majorSame)
 
-	if flags.PatchValue != nil && current.Major == original.Major && current.Minor == original.Minor && *flags.PatchValue < original.Patch {
-		result = append(result, decrease{component: "patch", previous: original.Patch, current: *flags.PatchValue})
-	}
+	minorSame := current.Minor == original.Minor
+	checkIntDecrease(&result, flags.PatchValue, original.Patch, "patch", majorSame && minorSame)
 
-	baseSame := current.Major == original.Major && current.Minor == original.Minor && current.Patch == original.Patch
+	baseSame := majorSame && minorSame && current.Patch == original.Patch
 
 	if flags.StageValue != nil && baseSame {
 		stageName := strings.ToLower(flags.Stage)
-		if stageName != "" && original.Stage != nil && current.Stage != nil && strings.ToLower(original.StageName) == stageName {
-			if *current.Stage < *original.Stage {
-				result = append(result, decrease{component: stageName, previous: *original.Stage, current: *current.Stage})
-			}
-		}
+		stageSame := stageName != "" && original.Stage != nil && current.Stage != nil && strings.ToLower(original.StageName) == stageName
+		checkPtrDecrease(&result, flags.StageValue, original.Stage, current.Stage, stageName, stageSame)
 	}
 
 	if flags.EnvValue != nil && baseSame {
@@ -467,21 +460,36 @@ func detectDecreases(original, current *Tag, flags CmdFlags) []decrease {
 		if envName != "" {
 			origEnvName, origEnvVal := envInfo(original)
 			currEnvName, currEnvVal := envInfo(current)
-			if origEnvVal != nil && currEnvVal != nil && origEnvName == envName && currEnvName == envName {
-				if *currEnvVal < *origEnvVal {
-					result = append(result, decrease{component: envName, previous: *origEnvVal, current: *currEnvVal})
-				}
-			}
+			envSame := origEnvVal != nil && currEnvVal != nil && origEnvName == envName && currEnvName == envName
+			checkPtrDecrease(&result, flags.EnvValue, origEnvVal, currEnvVal, envName, envSame)
 		}
 	}
 
-	if flags.ReleaseValue != nil && baseSame && original.Release != nil && current.Release != nil {
-		if *current.Release < *original.Release {
-			result = append(result, decrease{component: "release", previous: *original.Release, current: *current.Release})
-		}
+	if flags.ReleaseValue != nil && baseSame {
+		checkPtrDecrease(&result, flags.ReleaseValue, original.Release, current.Release, "release", true)
 	}
 
 	return result
+}
+
+func checkIntDecrease(dest *[]decrease, flagVal *int, originalVal int, component string, condition bool) {
+	if condition && flagVal != nil && *flagVal < originalVal {
+		*dest = append(*dest, decrease{
+			component: component,
+			previous:  originalVal,
+			current:   *flagVal,
+		})
+	}
+}
+
+func checkPtrDecrease(dest *[]decrease, flagVal *int, originalVal *int, currentVal *int, component string, condition bool) {
+	if condition && flagVal != nil && originalVal != nil && currentVal != nil && *currentVal < *originalVal {
+		*dest = append(*dest, decrease{
+			component: component,
+			previous:  *originalVal,
+			current:   *currentVal,
+		})
+	}
 }
 
 func formatDecreases(decreases []decrease) string {
