@@ -26,7 +26,11 @@ var (
 	allowBackwards   = flag.Bool("allow-backwards", false, "Allow numeric arguments to decrease version counters")
 	skipForwards     = flag.Bool("skip-forwards", false, "Automatically bump the patch when numeric arguments go backwards")
 	force            = flag.Bool("force", false, "Force the operation (implies --allow-backwards, --repeating, --ignore)")
-	mode             = flag.String("mode", "default", "Naming mode: default or arraneous")
+	// TODO: consider supporting other naming modes such as "xyzzy",
+	// "hybrid" or "octarine" which some teams use internally.
+	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
+
+	out io.Writer = os.Stderr
 )
 
 // nolint: gochecknoglobals
@@ -51,6 +55,7 @@ func main() {
 
 	if *printVersionOnly {
 		*dry = true
+		out = io.Discard
 		log.SetOutput(io.Discard)
 	}
 	if *showVersion {
@@ -61,7 +66,7 @@ func main() {
 		log.SetFlags(0)
 	}
 	if *verbose {
-		log.Printf("Version: %s (%s) by %s commit %s", version, date, builtBy, commit)
+		fmt.Fprintf(out, "Version: %s (%s) by %s commit %s\n", version, date, builtBy, commit)
 	}
 	r, err := git.PlainOpen(".")
 	if err != nil {
@@ -77,8 +82,8 @@ func main() {
 	var tagger *object.Signature
 	if cfgErr == nil {
 		if cfg.User.Name == "" || cfg.User.Email == "" {
-			log.Printf("git user.name or user.email not configured")
-			log.Printf("Run `git config --global user.name \"Your Name\"` and `git config --global user.email \"you@example.com\"`")
+			fmt.Fprintf(out, "git user.name or user.email not configured\n")
+			fmt.Fprintf(out, "Run `git config --global user.name \"Your Name\"` and `git config --global user.email \"you@example.com\"`\n")
 			os.Exit(1)
 			return
 		}
@@ -101,7 +106,7 @@ func main() {
 			os.Exit(1)
 		}
 		if !s.IsClean() {
-			log.Printf("There are uncommitted changes in this repo.")
+			fmt.Fprintf(out, "There are uncommited changes in thils repo.\n")
 			os.Exit(1)
 			return
 		}
@@ -120,7 +125,7 @@ func main() {
 	if !*repeating && currentHash != "" {
 		lastSimilar, err := FindHighestSimilarVersionTag(r, flags.Env)
 		if err != nil {
-			log.Printf("Failed to find highest similar version tag: %v", err)
+			fmt.Fprintf(out, "Failed to find highest similar version tag: %v", err)
 			os.Exit(1)
 		}
 		if lastSimilar != nil {
@@ -134,7 +139,7 @@ func main() {
 				}
 			} else {
 				if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
-					log.Printf("Hash is the same for this and previous tag: (%s) %s and %s", lastSimilar, lastSimilarHash, currentHash)
+					fmt.Fprintf(out, "Hash is the same for this and previous tag: (%s) %s and %s\n", lastSimilar, lastSimilarHash, currentHash)
 					os.Exit(1)
 					return
 				}
@@ -144,18 +149,18 @@ func main() {
 
 	highest, err := FindHighestVersionTag(r)
 	if err != nil {
-		log.Printf("Failed to find highest version tag: %v", err)
+		fmt.Fprintf(out, "Failed to find highest version tag: %v", err)
 		os.Exit(1)
 	}
 
-	log.Printf("Largest: %s (%s)", highest, currentHash)
+	fmt.Fprintf(out, "Largest: %s (%s)\n", highest, currentHash)
 
 	if err := highest.Increment(flags, *allowBackwards, *skipForwards); err != nil {
-		log.Printf("%v", err)
+		fmt.Fprintf(out, "%v\n", err)
 		os.Exit(1)
 	}
 
-	log.Printf("Creating %s", highest)
+	fmt.Fprintf(out, "Creating %s\n", highest)
 	if *printVersionOnly {
 		fmt.Println(highest.String())
 		return
@@ -172,7 +177,7 @@ func main() {
 			Tagger:  tagger,
 		})
 	} else {
-		log.Printf("Dry run finished.")
+		fmt.Fprintf(out, "Dry run finished.\n")
 	}
 	if err != nil {
 		log.Printf("Failed to create tag: %v", err)
@@ -228,12 +233,20 @@ func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag
 		}
 		return last.LessThan(current)
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to find highest similar version tag: %w", err)
+	}
+	return t, nil
 }
 
 func FindHighestVersionTag(r *git.Repository) (*gittaginc.Tag, error) {
 	return FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
 		return last.LessThan(current)
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to find highest version tag: %w", err)
+	}
+	return t, nil
 }
 
 func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) bool) (*gittaginc.Tag, error) {
@@ -244,7 +257,7 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 	var highest *gittaginc.Tag = &gittaginc.Tag{}
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
 		if *verbose {
-			log.Printf("Ref: %s", ref.Name())
+			fmt.Fprintf(out, "Ref: %s\n", ref.Name())
 		}
 		t := gittaginc.ParseTag(ref.Name().Short())
 		if t == nil {
