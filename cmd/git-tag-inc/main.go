@@ -284,9 +284,23 @@ func Usage() {
 	out := flag.CommandLine.Output()
 
 	var buf bytes.Buffer
-	flag.CommandLine.SetOutput(&buf)
-	flag.PrintDefaults()
-	flag.CommandLine.SetOutput(out)
+	flag.VisitAll(func(f *flag.Flag) {
+		fmt.Fprintf(&buf, "  -%s", f.Name)
+		name, usage := flag.UnquoteUsage(f)
+		if len(name) > 0 {
+			fmt.Fprintf(&buf, " %s", name)
+		}
+		if len(usage) > 24 {
+			fmt.Fprintf(&buf, "\n    \t")
+		} else {
+			fmt.Fprintf(&buf, "\t")
+		}
+		fmt.Fprintf(&buf, "%s", usage)
+		if f.DefValue != "" {
+			fmt.Fprintf(&buf, " (default %s)", f.DefValue)
+		}
+		fmt.Fprint(&buf, "\n")
+	})
 
 	t, err := template.New("usage").Parse(usageText)
 	if err != nil {
