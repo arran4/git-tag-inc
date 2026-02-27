@@ -20,8 +20,10 @@ still increases. For instance, `git-tag-inc --skip-forwards test2` upgrades
 git-tag-inc then, one or more of:
 * `major        => v0.0.1-test1 => v1.0.0`
 * `minor        => v0.0.1-test1 => v0.1.0`
-* `{{.PatchName}}        => v0.0.1-test1 => v0.0.2`
-{{.ReleaseLines}}* `test         => v0.0.1-test1 => v0.0.1-test2`
+* `{{if .IsArraneousMode}}release{{else}}patch{{end}}        => v0.0.1-test1 => v0.0.2`
+{{if not .IsArraneousMode}}* `release      => v0.0.1-test1 => v0.0.1-test2`
+* `release      => v0.0.1 => v0.0.1.1`
+{{end}}* `test         => v0.0.1-test1 => v0.0.1-test2`
 * `uat          => v0.0.1-uat1  => v0.0.1-uat2`
 * `alpha        => v0.0.1-alpha1 => v0.0.1-alpha2`
 * `beta         => v0.0.1-beta1  => v0.0.1-beta2`

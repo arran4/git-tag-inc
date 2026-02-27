@@ -308,20 +308,13 @@ func Usage() {
 	}
 
 	data := struct {
-		ProgramName  string
-		Flags        string
-		PatchName    string
-		ReleaseLines string
+		ProgramName     string
+		Flags           string
+		IsArraneousMode bool
 	}{
-		ProgramName: os.Args[0],
-		Flags:       buf.String(),
-		PatchName:   "patch",
-	}
-
-	if *mode == gittaginc.ModeArraneous {
-		data.PatchName = "release"
-	} else {
-		data.ReleaseLines = "* `release      => v0.0.1-test1 => v0.0.1-test2`\n* `release      => v0.0.1 => v0.0.1.1`\n"
+		ProgramName:     os.Args[0],
+		Flags:           buf.String(),
+		IsArraneousMode: *mode == gittaginc.ModeArraneous,
 	}
 
 	if err := t.Execute(out, data); err != nil {
