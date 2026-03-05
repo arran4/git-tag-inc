@@ -59,11 +59,11 @@ nfpms:
 
 homebrew_casks:
   -
-    name: git-tag-inc
     repository:
       owner: arran4
       name: homebrew-tap
+      branch: "{{.ProjectName}}-{{.Version}}"
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
       pull_request:
         enabled: true
-    description: "NA"
-    homepage: "https://github.com/arran4/"
+        draft: false
