@@ -39,7 +39,7 @@ var (
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
 	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
-	baseVersion      = flag.String("base-version", "", "Base version to increment. If '-' is provided, reads from stdin. Bypasses git repository checks.")
+	baseVersion      = flag.String("base-version", "", "String mode: explicit base version to increment. If '-' is provided, reads from stdin. Operates entirely offline and bypasses git repository checks.")
 
 	out io.Writer = os.Stderr
 )

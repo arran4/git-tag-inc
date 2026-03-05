@@ -6,6 +6,12 @@ Flags:
 Use --version to display build information and credits.
 Use --print-version-only to output the next version without tagging.
 
+String Mode (Offline Use):
+If `--base-version <tag>` or a solitary `-` argument is provided, the tool runs
+in an offline "string mode". It reads the base version, applies the specified
+commands, and outputs the resulting version string directly to stdout. It bypasses
+git repository checks completely. For example: `echo "v0.1.1" | git-tag-inc patch -`
+
 --mode arraneous switches to the legacy naming (patch becomes `release`).
 
 Numeric suffixes can be added to any command to set a specific counter. For example,
