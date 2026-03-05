@@ -18,6 +18,9 @@ builds:
     goarm:
       - 6
       - 7
+    ignore:
+      - goos: windows
+        goarch: arm
 archives:
   -
     format_overrides:
@@ -54,7 +57,7 @@ nfpms:
         file_info:
           mode: 0644
 
-brews:
+homebrew_casks:
   -
     name: git-tag-inc
     repository:
