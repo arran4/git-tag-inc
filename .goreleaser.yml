@@ -1,3 +1,4 @@
+version: 2
 project_name: git-tag-inc
 builds:
   -
@@ -21,11 +22,11 @@ archives:
   -
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [ 'zip' ]
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
@@ -52,3 +53,12 @@ nfpms:
         type: doc
         file_info:
           mode: 0644
+
+brews:
+  -
+    name: git-tag-inc
+    repository:
+      owner: arran4
+      name: homebrew-tap
+    description: "NA"
+    homepage: "https://github.com/arran4/"
