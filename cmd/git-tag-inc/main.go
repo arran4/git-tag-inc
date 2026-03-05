@@ -14,6 +14,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"text/template"
 	"time"
 
@@ -38,6 +39,7 @@ var (
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
 	mode = flag.String("mode", "default", "Naming mode: default or arraneous")
+	baseVersion      = flag.String("base-version", "", "Base version to increment. If '-' is provided, reads from stdin. Bypasses git repository checks.")
 
 	out io.Writer = os.Stderr
 )
@@ -55,6 +57,27 @@ var (
 func main() {
 	flag.Usage = Usage
 	flag.Parse()
+
+	args := flag.Args()
+	hasDash := false
+	var filteredArgs []string
+	for _, arg := range args {
+		if arg == "-" {
+			hasDash = true
+		} else {
+			filteredArgs = append(filteredArgs, arg)
+		}
+	}
+
+	baseVersionStr := *baseVersion
+	if hasDash || baseVersionStr == "-" {
+		b, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			log.Printf("Failed to read from stdin: %v", err)
+			os.Exit(1)
+		}
+		baseVersionStr = strings.TrimSpace(string(b))
+	}
 
 	if *force {
 		*allowBackwards = true
@@ -77,6 +100,27 @@ func main() {
 	if *verbose {
 		fmt.Fprintf(out, "Version: %s (%s) by %s commit %s\n", version, date, builtBy, commit)
 	}
+	flags := gittaginc.CommandsToFlags(filteredArgs, *mode)
+	if !flags.Valid || (!flags.Major && !flags.Minor && !flags.Patch && !flags.Release && flags.Env == "" && flags.Stage == "") {
+		Usage()
+		return
+	}
+
+	if baseVersionStr != "" {
+		t := gittaginc.ParseTag(baseVersionStr)
+		if t == nil {
+			fmt.Fprintf(out, "Invalid base version tag: %s\n", baseVersionStr)
+			os.Exit(1)
+		}
+		if err := t.Increment(flags, *allowBackwards, *skipForwards); err != nil {
+			fmt.Fprintf(out, "%v\n", err)
+			os.Exit(1)
+		}
+		// Ensure output goes directly to stdout, without any prefixes like "Largest:" or "Creating".
+		fmt.Println(t.String())
+		return
+	}
+
 	r, err := git.PlainOpen(".")
 	if err != nil {
 		if errors.Is(err, git.ErrRepositoryNotExists) {
@@ -121,11 +165,6 @@ func main() {
 		}
 	}
 
-	flags := gittaginc.CommandsToFlags(flag.Args(), *mode)
-	if !flags.Valid || (!flags.Major && !flags.Minor && !flags.Patch && !flags.Release && flags.Env == "" && flags.Stage == "") {
-		Usage()
-		return
-	}
 	currentHash, err := GetHash(r, nil)
 	if err != nil {
 		log.Printf("Failed to get current hash: %v", err)

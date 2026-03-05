@@ -54,7 +54,7 @@ func TestMain_NoGitRepo(t *testing.T) {
 	defer os.RemoveAll(nonGitDir)
 
 	// Run the tool in the non-git dir
-	cmd := exec.Command(exePath)
+	cmd := exec.Command(exePath, "patch")
 	cmd.Dir = nonGitDir
 	output, err := cmd.CombinedOutput()
 
