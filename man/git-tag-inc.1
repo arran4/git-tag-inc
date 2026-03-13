@@ -12,8 +12,8 @@ increments semantic version numbers and creates new Git tags. It detects
 existing tags in the repository and bumps the version according to the
 given commands.
 .PP
-Stages such as \fBalpha\fP, \fBbeta\fP and \fBrc\fP are supported, as
-well as environments \fBtest\fP and \fBuat\fP.
+Stages such as \fBalpha\fP, \fBbeta\fP, \fBrc\fP and \fBnext\fP are supported,
+as well as environments \fBtest\fP and \fBuat\fP.
 .SH COMMANDS
 .TP
 .B major
@@ -29,7 +29,7 @@ Increment the patch version.
 Increment the release number. When \fB--mode arraneous\fP is used, this
 is equivalent to \fBpatch\fP.
 .TP
-.B alpha | beta | rc
+.B alpha | beta | rc | next
 Start or bump the named prerelease stage.
 .TP
 .B test | uat

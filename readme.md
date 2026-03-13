@@ -5,7 +5,7 @@ Increments the version number and tags it. (You will need to push)
 # Usage
 
 ```
-./git-tag-inc [--allow-backwards] [--skip-forwards] [major[<n>]] [minor[<n>]] [patch[<n>]] [release[<n>]] [alpha|beta|rc[<n>]] [test|uat[<n>]]
+./git-tag-inc [--allow-backwards] [--skip-forwards] [major[<n>]] [minor[<n>]] [patch[<n>]] [release[<n>]] [alpha|beta|rc|next[<n>]] [test|uat[<n>]]
 --version [--print-version-only]
 ```
 
@@ -34,6 +34,7 @@ still increases. For instance, `git-tag-inc --skip-forwards test2` upgrades
 * `alpha        => v0.0.1-alpha1 => v0.0.1-alpha2`
 * `beta         => v0.0.1-beta1  => v0.0.1-beta2`
 * `rc           => v0.0.1-rc1    => v0.0.1-rc2`
+* `next         => v0.0.1-next1  => v0.0.1-next2`
 * `rc5          => v0.0.1-rc1    => v0.0.1-rc5`
 * `major4       => v0.0.1        => v4.0.0`
 

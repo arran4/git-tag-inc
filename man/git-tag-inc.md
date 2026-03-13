@@ -17,8 +17,8 @@ counter explicitly. If the requested number is lower than the current value the
 command fails unless either `--allow-backwards` is supplied or
 `--skip-forwards` is used to automatically bump the patch component first.
 
-Supported stages include `alpha`, `beta` and `rc`. Environment counters `test`
-and `uat` are also available.
+Supported stages include `alpha`, `beta`, `rc` and `next`. Environment counters
+`test` and `uat` are also available.
 
 ## Commands
 - `major`  – bump the major version (resets minor and patch)
@@ -26,7 +26,7 @@ and `uat` are also available.
 - `patch`  – bump the patch version
 - `release` – bump the release number. In `--mode arraneous` this behaves as
   `patch`
-- `alpha`, `beta`, `rc` – start or bump the named pre-release stage
+- `alpha`, `beta`, `rc`, `next` – start or bump the named pre-release stage
 - `test`, `uat` – start or bump the named environment counter
 
 ## Options

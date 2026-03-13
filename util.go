@@ -84,7 +84,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 					c.ReleaseValue = value
 				}
 			}
-		case "alpha", "beta", "rc":
+		case "alpha", "beta", "rc", "next":
 			if c.Stage != "" {
 				c.Valid = false
 				return c
