@@ -212,7 +212,7 @@ jobs:
               release-alpha) level="patch"; suffix="alpha" ;;
               *) echo "Unsupported release mode: $MODE"; exit 1 ;;
             esac
-            next_tag=$(go run ./cmd/git-tag-inc -repeating -print-version-only $level $suffix)
+            next_tag=$(go run ./cmd/git-tag-inc -print-version-only $level $suffix)
           fi
 
           echo "release_tag=$next_tag" >> "$GITHUB_OUTPUT"
