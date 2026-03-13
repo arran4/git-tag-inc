@@ -131,17 +131,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, cfgErr := r.ConfigScoped(config.SystemScope)
 	var tagger *object.Signature
-	if cfgErr == nil {
-		if cfg.User.Name == "" || cfg.User.Email == "" {
-			if !*printVersionOnly {
+	if !*printVersionOnly {
+		cfg, cfgErr := r.ConfigScoped(config.SystemScope)
+		if cfgErr == nil {
+			if cfg.User.Name == "" || cfg.User.Email == "" {
 				fmt.Fprintf(out, "git user.name or user.email not configured\n")
 				fmt.Fprintf(out, "Run `git config --global user.name \"Your Name\"` and `git config --global user.email \"you@example.com\"`\n")
 				os.Exit(1)
 				return
 			}
-		} else {
 			tagger = &object.Signature{
 				Name:  cfg.User.Name,
 				Email: cfg.User.Email,
