@@ -82,8 +82,9 @@ const (
 	rankAlpha   stageRankType = 0
 	rankBeta    stageRankType = 1
 	rankRC      stageRankType = 2
-	rankRelease stageRankType = 3
-	rankOther   stageRankType = 4
+	rankNext    stageRankType = 3
+	rankRelease stageRankType = 4
+	rankOther   stageRankType = 5
 )
 
 func stageRank(n string) stageRankType {
@@ -94,6 +95,8 @@ func stageRank(n string) stageRankType {
 		return rankBeta
 	case "rc":
 		return rankRC
+	case "next":
+		return rankNext
 	default:
 		if n == "" {
 			return rankRelease
@@ -192,7 +195,7 @@ var parseTagOnce sync.Once
 
 func getParseTagRe() *regexp.Regexp {
 	parseTagOnce.Do(func() {
-		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
+		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc|next))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
 	})
 	return parseTagRe
 }
