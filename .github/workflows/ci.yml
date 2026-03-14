@@ -350,6 +350,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - name: Create tag locally (workflow_dispatch)
+        if: ${{ github.event_name == 'workflow_dispatch' && needs.prepare-release-tag.outputs.release_tag != '' }}
+        run: git tag ${{ needs.prepare-release-tag.outputs.release_tag }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
