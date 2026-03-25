@@ -64,9 +64,30 @@ $ git-tag-inc --skip-forwards release2
 
 You can use the packages provided. Put them in your `$PATH` or `%path%` depending on OS. You can also use:
 ```
-$ git clone github.com/arran4/git-tag-inc
-$ cd git-tag-inc
-$ go install .
+$ go install github.com/arran4/git-tag-inc
+```
+
+# GitHub Action
+
+You can use the [git-tag-inc-action](https://github.com/arran4/git-tag-inc-action) GitHub Action in your workflows.
+
+## Usage
+
+```yaml
+name: Example workflow
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use git-tag-inc Action
+        uses: arran4/git-tag-inc-action@v1
+        with:
+          # Optional: specify an action
+          action: 'patch'
 ```
 
 # Example:
