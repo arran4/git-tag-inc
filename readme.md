@@ -69,6 +69,29 @@ $ cd git-tag-inc
 $ go install .
 ```
 
+# GitHub Action
+
+You can use the [git-tag-inc-action](https://github.com/arran4/git-tag-inc-action) GitHub Action in your workflows.
+
+## Usage
+
+```yaml
+name: Example workflow
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use git-tag-inc Action
+        uses: arran4/git-tag-inc-action@v1
+        with:
+          # Optional: specify an action
+          action: 'bump'
+```
+
 # Example:
 
 ```
