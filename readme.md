@@ -64,9 +64,7 @@ $ git-tag-inc --skip-forwards release2
 
 You can use the packages provided. Put them in your `$PATH` or `%path%` depending on OS. You can also use:
 ```
-$ git clone github.com/arran4/git-tag-inc
-$ cd git-tag-inc
-$ go install .
+$ go install github.com/arran4/git-tag-inc
 ```
 
 # GitHub Action
@@ -89,7 +87,7 @@ jobs:
         uses: arran4/git-tag-inc-action@v1
         with:
           # Optional: specify an action
-          action: 'bump'
+          action: 'patch'
 ```
 
 # Example:
