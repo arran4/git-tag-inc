@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/go-git/go-git/v5 v5.17.1
 	github.com/pkg/errors v0.9.1
+	golang.org/x/image v0.38.0
 )
 
 require (
