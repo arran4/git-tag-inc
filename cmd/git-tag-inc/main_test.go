@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	_ "golang.org/x/image/font"
 )
 
 func TestUsage(t *testing.T) {
