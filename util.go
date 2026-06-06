@@ -13,6 +13,8 @@ import (
 )
 
 const ModeArraneous = "arraneous"
+const ModeSemver = "semver"
+const ModeLegacy = "legacy"
 
 type CmdFlags struct {
 	Major        bool
@@ -30,10 +32,11 @@ type CmdFlags struct {
 	EnvValue     *int
 	EnvDigits    int
 	Valid        bool
+	Mode         string
 }
 
 func CommandsToFlags(args []string, mode string) CmdFlags {
-	c := CmdFlags{Valid: true}
+	c := CmdFlags{Valid: true, Mode: mode}
 	re := regexp.MustCompile(`^([a-z]+)(\d+)?$`)
 	for _, f := range args {
 		lower := strings.ToLower(f)
