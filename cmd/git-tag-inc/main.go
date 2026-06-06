@@ -299,7 +299,7 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 	if err != nil {
 		return nil, err
 	}
-	var highest *gittaginc.Tag = &gittaginc.Tag{}
+	var highest *gittaginc.Tag = &gittaginc.Tag{Mode: *mode}
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
 		if *verbose {
 			fmt.Fprintf(out, "Ref: %s\n", ref.Name())

@@ -210,7 +210,11 @@ func (t *Tag) String() string {
 			ext += fmt.Sprintf("%0*d", t.Pad, *t.Test)
 		}
 		if t.Release != nil {
-			ext += fmt.Sprintf(".%d", *t.Release)
+			if ext == "" {
+				ext += fmt.Sprintf("-%d", *t.Release)
+			} else {
+				ext += fmt.Sprintf(".%d", *t.Release)
+			}
 		}
 	}
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
