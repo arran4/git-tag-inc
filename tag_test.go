@@ -38,6 +38,8 @@ func TestParseTag(t *testing.T) {
 		{"v1.0.0-beta007-uat012", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, Uat: new(12), Pad: 3}},
 		{"v1.0.0-beta1-test2.3", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, Test: new(2), Pad: 0, Release: new(3)}},
 		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
+		{"v1.2.3.1", &Tag{Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
+		{"v1.2.3-1", &Tag{Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 	}
 	for _, tt := range tests {
 		got := ParseTag(tt.tag)

@@ -225,7 +225,7 @@ var parseTagOnce sync.Once
 
 func getParseTagRe() *regexp.Regexp {
 	parseTagOnce.Do(func() {
-		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:(?:-|\.)((?:alpha|beta|rc|next))(?:(?:-|\.?)((?:0*)(\d+))))?(?:(?:-|\.)((?:test|uat))(?:(?:-|\.?)((?:0*)(\d+))))?(?:\.(\d+))?$`)
+		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:(?:-|\.)((?:alpha|beta|rc|next))(?:(?:-|\.?)((?:0*)(\d+))))?(?:(?:-|\.)((?:test|uat))(?:(?:-|\.?)((?:0*)(\d+))))?(?:(?:-|\.)(\d+))?$`)
 	})
 	return parseTagRe
 }
