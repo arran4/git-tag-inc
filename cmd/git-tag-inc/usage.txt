@@ -12,6 +12,8 @@ in an offline "string mode". It reads the base version, applies the specified
 commands, and outputs the resulting version string directly to stdout. It bypasses
 git repository checks completely. For example: `echo "v0.1.1" | git-tag-inc patch -`
 
+--mode legacy switches to the old tag format (e.g., `-alpha1-test2` instead of the
+default semver `-alpha.1.test.2`).
 --mode arraneous switches to the legacy naming (patch becomes `release`).
 
 Numeric suffixes can be added to any command to set a specific counter. For example,
