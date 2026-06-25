@@ -20,6 +20,7 @@ func ptr(i int) *int {
 
 type Tag struct {
 	Hash string
+	Mode string
 
 	StageName string
 	Stage     *int
@@ -41,6 +42,7 @@ func (t *Tag) Clone() *Tag {
 	}
 	clone := &Tag{
 		Hash:      t.Hash,
+		Mode:      t.Mode,
 		StageName: t.StageName,
 		StagePad:  t.StagePad,
 		Pad:       t.Pad,
@@ -176,16 +178,44 @@ func (t *Tag) LessThan(other *Tag) bool {
 
 func (t *Tag) String() string {
 	ext := ""
-	if t.Stage != nil {
-		ext += fmt.Sprintf("-%s%0*d", t.StageName, t.StagePad, *t.Stage)
-	}
-	if t.Uat != nil {
-		ext += fmt.Sprintf("-uat%0*d", t.Pad, *t.Uat)
-	} else if t.Test != nil {
-		ext += fmt.Sprintf("-test%0*d", t.Pad, *t.Test)
-	}
-	if t.Release != nil {
-		ext += fmt.Sprintf(".%d", *t.Release)
+	if t.Mode == ModeLegacy || t.Mode == ModeArraneous {
+		if t.Stage != nil {
+			ext += fmt.Sprintf("-%s%0*d", t.StageName, t.StagePad, *t.Stage)
+		}
+		if t.Uat != nil {
+			ext += fmt.Sprintf("-uat%0*d", t.Pad, *t.Uat)
+		} else if t.Test != nil {
+			ext += fmt.Sprintf("-test%0*d", t.Pad, *t.Test)
+		}
+		if t.Release != nil {
+			ext += fmt.Sprintf(".%d", *t.Release)
+		}
+	} else {
+		if t.Stage != nil {
+			ext += fmt.Sprintf("-%s.%0*d", t.StageName, t.StagePad, *t.Stage)
+		}
+		if t.Uat != nil {
+			if ext == "" {
+				ext += "-uat."
+			} else {
+				ext += ".uat."
+			}
+			ext += fmt.Sprintf("%0*d", t.Pad, *t.Uat)
+		} else if t.Test != nil {
+			if ext == "" {
+				ext += "-test."
+			} else {
+				ext += ".test."
+			}
+			ext += fmt.Sprintf("%0*d", t.Pad, *t.Test)
+		}
+		if t.Release != nil {
+			if ext == "" {
+				ext += fmt.Sprintf("-%d", *t.Release)
+			} else {
+				ext += fmt.Sprintf(".%d", *t.Release)
+			}
+		}
 	}
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
@@ -195,7 +225,7 @@ var parseTagOnce sync.Once
 
 func getParseTagRe() *regexp.Regexp {
 	parseTagOnce.Do(func() {
-		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:-((?:alpha|beta|rc|next))((?:0*)(\d+)))?(?:-((?:test|uat))((?:0*)(\d+)))?(?:\.(\d+))?$`)
+		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:(?:-|\.)((?:alpha|beta|rc|next))(?:(?:-|\.?)((?:0*)(\d+))))?(?:(?:-|\.)((?:test|uat))(?:(?:-|\.?)((?:0*)(\d+))))?(?:(?:-|\.)(\d+))?$`)
 	})
 	return parseTagRe
 }
@@ -209,6 +239,13 @@ func ParseTag(tag string) *Tag {
 	t.Major, _ = strconv.Atoi(m[1])
 	t.Minor, _ = strconv.Atoi(m[2])
 	t.Patch, _ = strconv.Atoi(m[3])
+	base := fmt.Sprintf("v%d.%d.%d", t.Major, t.Minor, t.Patch)
+	remainder := tag[len(base):]
+	if strings.Contains(remainder, ".") {
+		t.Mode = ModeSemver
+	} else {
+		t.Mode = ModeLegacy
+	}
 	if m[4] != "" {
 		t.StageName = strings.ToLower(m[4])
 		t.StagePad = len(m[5])
