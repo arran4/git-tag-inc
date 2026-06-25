@@ -239,6 +239,13 @@ func ParseTag(tag string) *Tag {
 	t.Major, _ = strconv.Atoi(m[1])
 	t.Minor, _ = strconv.Atoi(m[2])
 	t.Patch, _ = strconv.Atoi(m[3])
+	base := fmt.Sprintf("v%d.%d.%d", t.Major, t.Minor, t.Patch)
+	remainder := tag[len(base):]
+	if strings.Contains(remainder, ".") {
+		t.Mode = ModeSemver
+	} else {
+		t.Mode = ModeLegacy
+	}
 	if m[4] != "" {
 		t.StageName = strings.ToLower(m[4])
 		t.StagePad = len(m[5])

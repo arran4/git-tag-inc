@@ -28,26 +28,21 @@ func TestParseTag(t *testing.T) {
 		{"v1.0.0-alpha01uat01", nil},
 		{"v1.0.0-beta01-foo01", nil},
 		{"v1.0.0-unknown1", nil},
-		{"v1.2.3", &Tag{Major: 1, Minor: 2, Patch: 3}},
-		{"v1.2.3-test45", &Tag{Major: 1, Minor: 2, Patch: 3, Test: new(45), Pad: 2}},
-		{"v1.2.3-uat0045", &Tag{Major: 1, Minor: 2, Patch: 3, Uat: new(45), Pad: 4}},
-		{"v1.2.3-alpha1", &Tag{Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: new(1), StagePad: 0}},
-		{"v1.2.3-beta02-test03", &Tag{Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
-		{"v1.0.0-rc01-test02", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, Test: new(2), Pad: 2}},
-		{"v1.0.0-next02-test01", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, Test: new(1), Pad: 2}},
-		{"v1.0.0-beta007-uat012", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, Uat: new(12), Pad: 3}},
-		{"v1.0.0-beta1-test2.3", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, Test: new(2), Pad: 0, Release: new(3)}},
+		{"v1.2.3", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3}},
+		{"v1.2.3-test45", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Test: new(45), Pad: 2}},
+		{"v1.2.3-uat0045", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Uat: new(45), Pad: 4}},
+		{"v1.2.3-alpha1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: new(1), StagePad: 0}},
+		{"v1.2.3-beta02-test03", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
+		{"v1.0.0-rc01-test02", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, Test: new(2), Pad: 2}},
+		{"v1.0.0-next02-test01", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, Test: new(1), Pad: 2}},
+		{"v1.0.0-beta007-uat012", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, Uat: new(12), Pad: 3}},
+		{"v1.0.0-beta1-test2.3", &Tag{Mode: ModeSemver, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, Test: new(2), Pad: 0, Release: new(3)}},
 		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
-		{"v1.2.3.1", &Tag{Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
-		{"v1.2.3-1", &Tag{Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
+		{"v1.2.3.1", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
+		{"v1.2.3-1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 	}
 	for _, tt := range tests {
 		got := ParseTag(tt.tag)
-		if got != nil && tt.want != nil {
-			got.Mode = tt.want.Mode
-		} else if got != nil {
-			got.Mode = ModeLegacy
-		}
 
 		if !reflect.DeepEqual(got, tt.want) {
 			if got == nil || tt.want == nil {
