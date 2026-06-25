@@ -38,7 +38,7 @@ var (
 	force            = flag.Bool("force", false, "Force the operation (implies --allow-backwards, --repeating, --ignore)")
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
-	mode = flag.String("mode", "semver", "Naming mode: semver (default), legacy, or arraneous")
+	mode = flag.String("mode", "auto", "Naming mode: auto (default), semver, legacy, or arraneous. Auto attempts to detect the mode from the previous tag.")
 	baseVersion      = flag.String("base-version", "", "String mode: explicit base version to increment. If '-' is provided, reads from stdin. Operates entirely offline and bypasses git repository checks.")
 
 	out io.Writer = os.Stderr
@@ -112,7 +112,9 @@ func main() {
 			fmt.Fprintf(out, "Invalid base version tag: %s\n", baseVersionStr)
 			os.Exit(1)
 		}
-		t.Mode = *mode
+		if *mode != "auto" {
+			t.Mode = *mode
+		}
 		if err := t.Increment(flags, *allowBackwards, *skipForwards); err != nil {
 			fmt.Fprintf(out, "%v\n", err)
 			os.Exit(1)
@@ -299,7 +301,13 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 	if err != nil {
 		return nil, err
 	}
-	var highest *gittaginc.Tag = &gittaginc.Tag{Mode: *mode}
+	var startMode string
+	if *mode == "auto" {
+		startMode = gittaginc.ModeSemver
+	} else {
+		startMode = *mode
+	}
+	var highest *gittaginc.Tag = &gittaginc.Tag{Mode: startMode}
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
 		if *verbose {
 			fmt.Fprintf(out, "Ref: %s\n", ref.Name())
@@ -308,7 +316,9 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 		if t == nil {
 			return nil
 		}
-		t.Mode = *mode
+		if *mode != "auto" {
+			t.Mode = *mode
+		}
 		t.Hash = ref.Hash().String()
 		if stop(highest, t) {
 			highest = t
