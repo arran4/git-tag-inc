@@ -13,7 +13,8 @@ commands, and outputs the resulting version string directly to stdout. It bypass
 git repository checks completely. For example: `echo "v0.1.1" | git-tag-inc patch -`
 
 --mode legacy switches to the old tag format (e.g., `-alpha1-test2` instead of the
-default semver `-alpha.1.test.2`).
+semver format `-alpha.1.test.2`). The default mode is `auto`, which detects the previous
+tag's format and falls back to semver.
 --mode arraneous switches to the legacy naming (patch becomes `release`).
 
 Numeric suffixes can be added to any command to set a specific counter. For example,
