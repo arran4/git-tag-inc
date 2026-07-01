@@ -98,20 +98,22 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				digits := len(m[2])
 				c.StageDigits = digits
 			}
-		case "test", "uat":
-			if c.Env != "" {
+		default:
+			if _, ok := ConfiguredEnvsMap[name]; ok {
+				if c.Env != "" {
+					c.Valid = false
+					return c
+				}
+				c.Env = name
+				if value != nil {
+					c.EnvValue = value
+					digits := len(m[2])
+					c.EnvDigits = digits
+				}
+			} else {
 				c.Valid = false
 				return c
 			}
-			c.Env = name
-			if value != nil {
-				c.EnvValue = value
-				digits := len(m[2])
-				c.EnvDigits = digits
-			}
-		default:
-			c.Valid = false
-			return c
 		}
 	}
 	return c

@@ -55,6 +55,9 @@ var (
 )
 
 func main() {
+	gittaginc.LoadConfig(".git-tag-inc.json")
+	gittaginc.LoadConfig(".gittaginc.json")
+
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -275,13 +278,10 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 
 func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag, error) {
 	t, err := FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
-		if env == "test" && current.Test == nil {
+		if env != "" && current.EnvName != env {
 			return false
 		}
-		if env == "uat" && current.Uat == nil {
-			return false
-		}
-		if env == "" && (current.Uat != nil || current.Test != nil) {
+		if env == "" && current.Env != nil {
 			return false
 		}
 		return last.LessThan(current)
