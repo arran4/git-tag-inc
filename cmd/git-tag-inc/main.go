@@ -55,8 +55,12 @@ var (
 )
 
 func main() {
-	gittaginc.LoadConfig(".git-tag-inc.json")
-	gittaginc.LoadConfig(".gittaginc.json")
+	if err := gittaginc.LoadConfig(".git-tag-inc.json"); err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Error loading .git-tag-inc.json: %v", err)
+	}
+	if err := gittaginc.LoadConfig(".gittaginc.json"); err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Error loading .gittaginc.json: %v", err)
+	}
 
 	flag.Usage = Usage
 	flag.Parse()

@@ -19,23 +19,26 @@ type Config struct {
 	Envs []string `json:"envs"`
 }
 
-func LoadConfig(path string) {
+func LoadConfig(path string) error {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return
+		return err
 	}
 	var c Config
 	if err := json.Unmarshal(b, &c); err != nil {
-		return
+		return err
 	}
 	if len(c.Envs) > 0 {
 		parseTagReLock.Lock()
 		defer parseTagReLock.Unlock()
-		ConfiguredEnvs = c.Envs
+		ConfiguredEnvs = make([]string, len(c.Envs))
 		ConfiguredEnvsMap = make(map[string]int)
-		for i, env := range ConfiguredEnvs {
-			ConfiguredEnvsMap[strings.ToLower(env)] = i
+		for i, env := range c.Envs {
+			lowerEnv := strings.ToLower(env)
+			ConfiguredEnvs[i] = lowerEnv
+			ConfiguredEnvsMap[lowerEnv] = i
 		}
 		parseTagRe = nil // invalidate cache
 	}
+	return nil
 }

@@ -99,7 +99,10 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.StageDigits = digits
 			}
 		default:
-			if _, ok := ConfiguredEnvsMap[name]; ok {
+			parseTagReLock.RLock()
+			_, ok := ConfiguredEnvsMap[name]
+			parseTagReLock.RUnlock()
+			if ok {
 				if c.Env != "" {
 					c.Valid = false
 					return c

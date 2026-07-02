@@ -452,21 +452,20 @@ func TestTag_Clone(t *testing.T) {
 
 func TestCustomEnvConfig(t *testing.T) {
 	// Override configuration
+	parseTagReLock.Lock()
 	originalEnvs := ConfiguredEnvs
 	originalMap := ConfiguredEnvsMap
+	ConfiguredEnvs = []string{"staging", "prod"}
+	ConfiguredEnvsMap = map[string]int{"staging": 0, "prod": 1}
+	parseTagRe = nil
+	parseTagReLock.Unlock()
 	defer func() {
+		parseTagReLock.Lock()
 		ConfiguredEnvs = originalEnvs
 		ConfiguredEnvsMap = originalMap
-		parseTagReLock.Lock()
 		parseTagRe = nil
 		parseTagReLock.Unlock()
 	}()
-
-	ConfiguredEnvs = []string{"staging", "prod"}
-	ConfiguredEnvsMap = map[string]int{"staging": 0, "prod": 1}
-	parseTagReLock.Lock()
-	parseTagRe = nil
-	parseTagReLock.Unlock()
 
 	// Parse test
 	tag := ParseTag("v1.0.0-staging1")

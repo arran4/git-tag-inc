@@ -141,8 +141,10 @@ func (t *Tag) LessThan(other *Tag) bool {
 	} else if ov == nil {
 		return true
 	} else {
+		parseTagReLock.RLock()
 		tIdx, tOk := ConfiguredEnvsMap[strings.ToLower(t.EnvName)]
 		oIdx, oOk := ConfiguredEnvsMap[strings.ToLower(other.EnvName)]
+		parseTagReLock.RUnlock()
 		if tOk && oOk && tIdx != oIdx {
 			return tIdx < oIdx
 		}
@@ -207,7 +209,11 @@ func getParseTagRe() *regexp.Regexp {
 	parseTagReLock.Lock()
 	defer parseTagReLock.Unlock()
 	if parseTagRe == nil {
-		envPattern := strings.Join(ConfiguredEnvs, "|")
+		escapedEnvs := make([]string, len(ConfiguredEnvs))
+		for i, env := range ConfiguredEnvs {
+			escapedEnvs[i] = regexp.QuoteMeta(env)
+		}
+		envPattern := strings.Join(escapedEnvs, "|")
 		if envPattern == "" {
 			envPattern = "test|uat"
 		}
@@ -243,7 +249,10 @@ func ParseTag(tag string) *Tag {
 		t.Pad = len(m[8])
 		v, _ := strconv.Atoi(m[9])
 		envName := strings.ToLower(m[7])
-		if _, ok := ConfiguredEnvsMap[envName]; ok {
+		parseTagReLock.RLock()
+		_, ok := ConfiguredEnvsMap[envName]
+		parseTagReLock.RUnlock()
+		if ok {
 			t.EnvName = envName
 			t.Env = &v
 		} else {
