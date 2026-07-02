@@ -55,6 +55,13 @@ var (
 )
 
 func main() {
+	if err := gittaginc.LoadConfig(".git-tag-inc.conf"); err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Error loading .git-tag-inc.conf: %v", err)
+	}
+	if err := gittaginc.LoadConfig(".gittaginc.conf"); err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Error loading .gittaginc.conf: %v", err)
+	}
+
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -275,13 +282,10 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 
 func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag, error) {
 	t, err := FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
-		if env == "test" && current.Test == nil {
+		if env != "" && current.EnvName != env {
 			return false
 		}
-		if env == "uat" && current.Uat == nil {
-			return false
-		}
-		if env == "" && (current.Uat != nil || current.Test != nil) {
+		if env == "" && current.Env != nil {
 			return false
 		}
 		return last.LessThan(current)

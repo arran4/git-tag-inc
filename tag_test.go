@@ -29,15 +29,15 @@ func TestParseTag(t *testing.T) {
 		{"v1.0.0-beta01-foo01", nil},
 		{"v1.0.0-unknown1", nil},
 		{"v1.2.3", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3}},
-		{"v1.2.3-test45", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Test: new(45), Pad: 2}},
-		{"v1.2.3-uat0045", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Uat: new(45), Pad: 4}},
+		{"v1.2.3-test45", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, EnvName: "test", Env: new(45), Pad: 2}},
+		{"v1.2.3-uat0045", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, EnvName: "uat", Env: new(45), Pad: 4}},
 		{"v1.2.3-alpha1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: new(1), StagePad: 0}},
-		{"v1.2.3-beta02-test03", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
-		{"v1.0.0-rc01-test02", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, Test: new(2), Pad: 2}},
-		{"v1.0.0-next02-test01", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, Test: new(1), Pad: 2}},
-		{"v1.0.0-beta007-uat012", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, Uat: new(12), Pad: 3}},
-		{"v1.0.0-beta1-test2.3", &Tag{Mode: ModeSemver, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, Test: new(2), Pad: 0, Release: new(3)}},
-		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
+		{"v1.2.3-beta02-test03", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
+		{"v1.0.0-rc01-test02", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, EnvName: "test", Env: new(2), Pad: 2}},
+		{"v1.0.0-next02-test01", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(1), Pad: 2}},
+		{"v1.0.0-beta007-uat012", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, EnvName: "uat", Env: new(12), Pad: 3}},
+		{"v1.0.0-beta1-test2.3", &Tag{Mode: ModeSemver, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, EnvName: "test", Env: new(2), Pad: 0, Release: new(3)}},
+		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
 		{"v1.2.3.1", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 		{"v1.2.3-1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 	}
@@ -63,10 +63,10 @@ func TestString(t *testing.T) {
 		{&Tag{Major: 0, Minor: 0, Patch: 0}, "v0.0.0", "v0.0.0"},
 		{&Tag{Major: 1, Minor: 2, Patch: 3}, "v1.2.3", "v1.2.3"},
 		{&Tag{Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2}, "v1.0.0-rc01", "v1.0.0-rc.01"},
-		{&Tag{Major: 0, Minor: 1, Patch: 2, Test: new(3), Pad: 2}, "v0.1.2-test03", "v0.1.2-test.03"},
-		{&Tag{Major: 2, Minor: 3, Patch: 4, StageName: "beta", Stage: new(2), StagePad: 2, Uat: new(1), Pad: 2}, "v2.3.4-beta02-uat01", "v2.3.4-beta.02.uat.01"},
-		{&Tag{Major: 5, Minor: 6, Patch: 7, StageName: "beta", Stage: new(2), StagePad: 3, Test: new(10), Pad: 3}, "v5.6.7-beta002-test010", "v5.6.7-beta.002.test.010"},
-		{&Tag{Major: 1, Minor: 0, Patch: 1, StageName: "alpha", Stage: new(1), StagePad: 2, Test: new(1), Pad: 2, Release: new(2)}, "v1.0.1-alpha01-test01.2", "v1.0.1-alpha.01.test.01.2"},
+		{&Tag{Major: 0, Minor: 1, Patch: 2, EnvName: "test", Env: new(3), Pad: 2}, "v0.1.2-test03", "v0.1.2-test.03"},
+		{&Tag{Major: 2, Minor: 3, Patch: 4, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "uat", Env: new(1), Pad: 2}, "v2.3.4-beta02-uat01", "v2.3.4-beta.02.uat.01"},
+		{&Tag{Major: 5, Minor: 6, Patch: 7, StageName: "beta", Stage: new(2), StagePad: 3, EnvName: "test", Env: new(10), Pad: 3}, "v5.6.7-beta002-test010", "v5.6.7-beta.002.test.010"},
+		{&Tag{Major: 1, Minor: 0, Patch: 1, StageName: "alpha", Stage: new(1), StagePad: 2, EnvName: "test", Env: new(1), Pad: 2, Release: new(2)}, "v1.0.1-alpha01-test01.2", "v1.0.1-alpha.01.test.01.2"},
 	}
 	for _, tt := range cases {
 		tt.tag.Mode = ModeLegacy
@@ -390,8 +390,7 @@ func TestTag_Clone(t *testing.T) {
 			StageName: "beta",
 			Stage:     new(1),
 			StagePad:  2,
-			Test:      new(2),
-			Uat:       new(3),
+			EnvName: "uat", Env: new(3),
 			Pad:       4,
 			Patch:     5,
 			Release:   new(6),
@@ -409,8 +408,8 @@ func TestTag_Clone(t *testing.T) {
 		clone.StageName = "alpha"
 		*clone.Stage = 99
 		clone.StagePad = 100
-		*clone.Test = 101
-		*clone.Uat = 102
+		*clone.Env = 102
+		clone.EnvName = "test"
 		clone.Pad = 103
 		clone.Patch = 104
 		*clone.Release = 105
@@ -427,11 +426,11 @@ func TestTag_Clone(t *testing.T) {
 		if original.StagePad != 2 {
 			t.Errorf("original StagePad modified")
 		}
-		if *original.Test != 2 {
-			t.Errorf("original Test modified")
+		if *original.Env != 3 {
+			t.Errorf("original Env modified")
 		}
-		if *original.Uat != 3 {
-			t.Errorf("original Uat modified")
+		if original.EnvName != "uat" {
+			t.Errorf("original EnvName modified")
 		}
 		if original.Pad != 4 {
 			t.Errorf("original Pad modified")
@@ -449,4 +448,61 @@ func TestTag_Clone(t *testing.T) {
 			t.Errorf("original Minor modified")
 		}
 	})
+}
+
+func TestCustomEnvConfig(t *testing.T) {
+	// Override configuration
+	parseTagReLock.Lock()
+	originalEnvs := ConfiguredEnvs
+	originalMap := ConfiguredEnvsMap
+	parseTagReLock.Unlock()
+
+	err := LoadConfig("testdata/test_config.conf")
+	if err != nil {
+		t.Fatalf("failed to load config: %v", err)
+	}
+
+	defer func() {
+		parseTagReLock.Lock()
+		ConfiguredEnvs = originalEnvs
+		ConfiguredEnvsMap = originalMap
+		parseTagRe = nil
+		parseTagReLock.Unlock()
+	}()
+
+	// Parse test
+	tag := ParseTag("v1.0.0-staging1")
+	if tag == nil || tag.EnvName != "staging" || *tag.Env != 1 {
+		t.Fatalf("failed to parse custom env: %+v", tag)
+	}
+
+	// Format test
+	if got := tag.String(); got != "v1.0.0-staging1" {
+		t.Fatalf("expected v1.0.0-staging1, got %s", got)
+	}
+
+	// CommandsToFlags test
+	flags := CommandsToFlags([]string{"prod2"}, "default")
+	if flags.Env != "prod" || *flags.EnvValue != 2 {
+		t.Fatalf("failed to parse custom env flag: %+v", flags)
+	}
+
+	// Increment test
+	err = tag.Increment(flags, false, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := tag.String(); got != "v1.0.0-prod02" {
+		t.Fatalf("expected v1.0.0-prod02, got %s", got)
+	}
+}
+
+func TestFindConfig(t *testing.T) {
+	path, err := FindConfig("testdata/test_config.conf")
+	if err != nil {
+		t.Fatalf("expected to find config, got %v", err)
+	}
+	if path == "" {
+		t.Fatalf("expected path to not be empty")
+	}
 }
