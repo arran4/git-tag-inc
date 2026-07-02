@@ -7,33 +7,85 @@
 package gittaginc
 
 import (
-	"encoding/json"
+	"bufio"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 var ConfiguredEnvs = []string{"test", "uat"}
 var ConfiguredEnvsMap = map[string]int{"test": 0, "uat": 1}
 
-type Config struct {
-	Envs []string `json:"envs"`
+func FindConfig(filename string) (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	for {
+		path := filepath.Join(dir, filename)
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", os.ErrNotExist
 }
 
-func LoadConfig(path string) error {
-	b, err := os.ReadFile(path)
+func LoadConfig(filename string) error {
+	path, err := FindConfig(filename)
 	if err != nil {
 		return err
 	}
-	var c Config
-	if err := json.Unmarshal(b, &c); err != nil {
+	file, err := os.Open(path)
+	if err != nil {
 		return err
 	}
-	if len(c.Envs) > 0 {
+	defer file.Close()
+
+	var envs []string
+	scanner := bufio.NewScanner(file)
+	// regex to match Envs: test & uat or Envs(test, uat)
+	reColon := regexp.MustCompile(`(?i)^\s*envs:\s*(.*)$`)
+	reParen := regexp.MustCompile(`(?i)^\s*envs\((.*)\)\s*$`)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		var content string
+		if m := reColon.FindStringSubmatch(line); len(m) > 0 {
+			content = m[1]
+		} else if m := reParen.FindStringSubmatch(line); len(m) > 0 {
+			content = m[1]
+		}
+
+		if content != "" {
+			parts := regexp.MustCompile(`[\s,&|]+`).Split(content, -1)
+			for _, p := range parts {
+				p = strings.TrimSpace(p)
+				if p != "" {
+					envs = append(envs, p)
+				}
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	if len(envs) > 0 {
 		parseTagReLock.Lock()
 		defer parseTagReLock.Unlock()
-		ConfiguredEnvs = make([]string, len(c.Envs))
+		ConfiguredEnvs = make([]string, len(envs))
 		ConfiguredEnvsMap = make(map[string]int)
-		for i, env := range c.Envs {
+		for i, env := range envs {
 			lowerEnv := strings.ToLower(env)
 			ConfiguredEnvs[i] = lowerEnv
 			ConfiguredEnvsMap[lowerEnv] = i
