@@ -68,7 +68,7 @@ func LoadConfig(filename string) error {
 		}
 
 		if content != "" {
-			parts := regexp.MustCompile(`[\s,&|]+`).Split(content, -1)
+			parts := regexp.MustCompile(`[\s,]+`).Split(content, -1)
 			for _, p := range parts {
 				p = strings.TrimSpace(p)
 				if p != "" {
