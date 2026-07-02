@@ -15,7 +15,9 @@ import (
 )
 
 var ConfiguredEnvs = []string{"test", "uat"}
+var ConfiguredEnvsSemver = []string{"alpha", "beta", "rc", "next"}
 var ConfiguredEnvsMap = map[string]int{"test": 0, "uat": 1}
+var ConfiguredEnvsSemverMap = map[string]int{"alpha": 0, "beta": 1, "rc": 2, "next": 3}
 
 func FindConfig(filename string) (string, error) {
 	dir, err := os.Getwd()

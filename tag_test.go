@@ -455,10 +455,13 @@ func TestCustomEnvConfig(t *testing.T) {
 	parseTagReLock.Lock()
 	originalEnvs := ConfiguredEnvs
 	originalMap := ConfiguredEnvsMap
-	ConfiguredEnvs = []string{"staging", "prod"}
-	ConfiguredEnvsMap = map[string]int{"staging": 0, "prod": 1}
-	parseTagRe = nil
 	parseTagReLock.Unlock()
+
+	err := LoadConfig("testdata/test_config.conf")
+	if err != nil {
+		t.Fatalf("failed to load config: %v", err)
+	}
+
 	defer func() {
 		parseTagReLock.Lock()
 		ConfiguredEnvs = originalEnvs
@@ -475,7 +478,7 @@ func TestCustomEnvConfig(t *testing.T) {
 
 	// Format test
 	if got := tag.String(); got != "v1.0.0-staging1" {
-		t.Fatalf("expected v1.0.0-staging01, got %s", got)
+		t.Fatalf("expected v1.0.0-staging1, got %s", got)
 	}
 
 	// CommandsToFlags test
@@ -485,11 +488,21 @@ func TestCustomEnvConfig(t *testing.T) {
 	}
 
 	// Increment test
-	err := tag.Increment(flags, false, false)
+	err = tag.Increment(flags, false, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got := tag.String(); got != "v1.0.0-prod02" {
 		t.Fatalf("expected v1.0.0-prod02, got %s", got)
+	}
+}
+
+func TestFindConfig(t *testing.T) {
+	path, err := FindConfig("testdata/test_config.conf")
+	if err != nil {
+		t.Fatalf("expected to find config, got %v", err)
+	}
+	if path == "" {
+		t.Fatalf("expected path to not be empty")
 	}
 }
