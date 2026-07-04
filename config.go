@@ -51,9 +51,9 @@ func LoadConfig(filename string) error {
 
 	var envs []string
 	scanner := bufio.NewScanner(file)
-	// regex to match Envs: test & uat or Envs(test, uat)
+	// regex to match Envs: test, uat
 	reColon := regexp.MustCompile(`(?i)^\s*envs:\s*(.*)$`)
-	reParen := regexp.MustCompile(`(?i)^\s*envs\((.*)\)\s*$`)
+
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -62,8 +62,6 @@ func LoadConfig(filename string) error {
 		}
 		var content string
 		if m := reColon.FindStringSubmatch(line); len(m) > 0 {
-			content = m[1]
-		} else if m := reParen.FindStringSubmatch(line); len(m) > 0 {
 			content = m[1]
 		}
 
