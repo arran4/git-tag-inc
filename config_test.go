@@ -1,6 +1,7 @@
 package gittaginc
 
 import "testing"
+import "testing/fstest"
 
 func TestCustomEnvConfig(t *testing.T) {
 	// Override configuration
@@ -9,7 +10,12 @@ func TestCustomEnvConfig(t *testing.T) {
 	originalMap := ConfiguredEnvsMap
 	parseTagReLock.Unlock()
 
-	err := LoadConfig("testdata/test_config.conf")
+	mockFS := fstest.MapFS{
+		"project/testdata/test_config.conf": &fstest.MapFile{
+			Data: []byte("Envs: staging, prod"),
+		},
+	}
+	err := LoadConfigFS(mockFS, "project/testdata/subfolder", "test_config.conf")
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -50,11 +56,19 @@ func TestCustomEnvConfig(t *testing.T) {
 }
 
 func TestFindConfig(t *testing.T) {
-	path, err := FindConfig("testdata/test_config.conf")
+	mockFS := fstest.MapFS{
+		"repo/.git-tag-inc.conf": &fstest.MapFile{
+			Data: []byte("Envs: qa, int"),
+		},
+		"repo/src/main.go": &fstest.MapFile{
+			Data: []byte("package main"),
+		},
+	}
+	path, err := FindConfig(mockFS, "repo/src", ".git-tag-inc.conf")
 	if err != nil {
 		t.Fatalf("expected to find config, got %v", err)
 	}
-	if path == "" {
-		t.Fatalf("expected path to not be empty")
+	if path != "repo/.git-tag-inc.conf" {
+		t.Fatalf("expected path repo/.git-tag-inc.conf, got %s", path)
 	}
 }

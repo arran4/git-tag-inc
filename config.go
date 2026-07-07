@@ -9,6 +9,7 @@ package gittaginc
 import (
 	"bufio"
 	"os"
+	"io/fs"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -19,18 +20,21 @@ var ConfiguredEnvsSemver = []string{"alpha", "beta", "rc", "next"}
 var ConfiguredEnvsMap = map[string]int{"test": 0, "uat": 1}
 var ConfiguredEnvsSemverMap = map[string]int{"alpha": 0, "beta": 1, "rc": 2, "next": 3}
 
-func FindConfig(filename string) (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
+func FindConfig(filesystem fs.FS, startDir string, filename string) (string, error) {
+	dir := startDir
 	for {
-		path := filepath.Join(dir, filename)
-		if _, err := os.Stat(path); err == nil {
+		path := filepath.ToSlash(filepath.Join(dir, filename))
+		if _, err := fs.Stat(filesystem, path); err == nil {
 			return path, nil
 		}
+
 		parent := filepath.Dir(dir)
-		if parent == dir {
+		if parent == dir || parent == "." || parent == "/" || dir == "" {
+			// check root
+			path := filename
+			if _, err := fs.Stat(filesystem, path); err == nil {
+				return path, nil
+			}
 			break
 		}
 		dir = parent
@@ -39,11 +43,22 @@ func FindConfig(filename string) (string, error) {
 }
 
 func LoadConfig(filename string) error {
-	path, err := FindConfig(filename)
+	dir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	file, err := os.Open(path)
+
+	// Convert absolute paths to relative ones if we are checking the os filesystem directly.
+	// But actually, it's easier to just pass a custom FS for testing. We can introduce a new function LoadConfigFS.
+	return LoadConfigFS(os.DirFS("/"), dir, filename)
+}
+
+func LoadConfigFS(filesystem fs.FS, startDir string, filename string) error {
+	path, err := FindConfig(filesystem, startDir, filename)
+	if err != nil {
+		return err
+	}
+	file, err := filesystem.Open(path)
 	if err != nil {
 		return err
 	}

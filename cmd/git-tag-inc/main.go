@@ -55,12 +55,8 @@ var (
 )
 
 func main() {
-	if err := gittaginc.LoadConfig(".git-tag-inc.conf"); err != nil && !os.IsNotExist(err) {
-		log.Printf("Warning: failed to load .git-tag-inc.conf: %v", err)
-	}
-	if err := gittaginc.LoadConfig(".gittaginc.conf"); err != nil && !os.IsNotExist(err) {
-		log.Printf("Warning: failed to load .gittaginc.conf: %v", err)
-	}
+	gittaginc.LoadConfig(".git-tag-inc.conf")
+	gittaginc.LoadConfig(".gittaginc.conf")
 
 	flag.Usage = Usage
 	flag.Parse()
