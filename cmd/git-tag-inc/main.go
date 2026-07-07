@@ -39,6 +39,7 @@ var (
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
 	mode = flag.String("mode", "auto", "Naming mode: auto, semver, legacy, or arraneous")
+	configFlag = flag.String("config", "", "Path to a configuration file. If specified and it doesn't exist, the program will fail.")
 	baseVersion      = flag.String("base-version", "", "String mode: explicit base version to increment. If '-' is provided, reads from stdin. Operates entirely offline and bypasses git repository checks.")
 
 	out io.Writer = os.Stderr
@@ -55,11 +56,16 @@ var (
 )
 
 func main() {
-	gittaginc.LoadConfig(".git-tag-inc.conf")
-	gittaginc.LoadConfig(".gittaginc.conf")
-
 	flag.Usage = Usage
 	flag.Parse()
+
+	if *configFlag != "" {
+		if err := gittaginc.LoadConfig(*configFlag); err != nil {
+			log.Fatalf("Error loading config %s: %v", *configFlag, err)
+		}
+	} else {
+		gittaginc.LoadConfig(".git-tag-inc.conf")
+	}
 
 	args := flag.Args()
 	hasDash := false

@@ -1,7 +1,8 @@
 package gittaginc
 
 import "testing"
-import "testing/fstest"
+import "os"
+import "path/filepath"
 
 func TestCustomEnvConfig(t *testing.T) {
 	// Override configuration
@@ -10,12 +11,14 @@ func TestCustomEnvConfig(t *testing.T) {
 	originalMap := ConfiguredEnvsMap
 	parseTagReLock.Unlock()
 
-	mockFS := fstest.MapFS{
-		"project/testdata/test_config.conf": &fstest.MapFile{
-			Data: []byte("Envs: staging, prod"),
-		},
+	tempDir := t.TempDir()
+	confPath := filepath.Join(tempDir, "test_config.conf")
+	err := os.WriteFile(confPath, []byte("Envs: staging, prod"), 0644)
+	if err != nil {
+		t.Fatalf("failed to write test config: %v", err)
 	}
-	err := LoadConfigFS(mockFS, "project/testdata/subfolder", "test_config.conf")
+
+	err = LoadConfig(confPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
@@ -56,19 +59,22 @@ func TestCustomEnvConfig(t *testing.T) {
 }
 
 func TestFindConfig(t *testing.T) {
-	mockFS := fstest.MapFS{
-		"repo/.git-tag-inc.conf": &fstest.MapFile{
-			Data: []byte("Envs: qa, int"),
-		},
-		"repo/src/main.go": &fstest.MapFile{
-			Data: []byte("package main"),
-		},
+	tempDir := t.TempDir()
+	repoDir := filepath.Join(tempDir, "repo")
+	srcDir := filepath.Join(repoDir, "src")
+	os.MkdirAll(srcDir, 0755)
+
+	confPath := filepath.Join(repoDir, ".git-tag-inc.conf")
+	err := os.WriteFile(confPath, []byte("Envs: qa, int"), 0644)
+	if err != nil {
+		t.Fatalf("failed to write config: %v", err)
 	}
-	path, err := FindConfig(mockFS, "repo/src", ".git-tag-inc.conf")
+
+	path, err := FindConfig(srcDir, ".git-tag-inc.conf")
 	if err != nil {
 		t.Fatalf("expected to find config, got %v", err)
 	}
-	if path != "repo/.git-tag-inc.conf" {
-		t.Fatalf("expected path repo/.git-tag-inc.conf, got %s", path)
+	if path != confPath {
+		t.Fatalf("expected path %s, got %s", confPath, path)
 	}
 }
