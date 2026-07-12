@@ -62,7 +62,9 @@ func TestFindConfig(t *testing.T) {
 	tempDir := t.TempDir()
 	repoDir := filepath.Join(tempDir, "repo")
 	srcDir := filepath.Join(repoDir, "src")
-	os.MkdirAll(srcDir, 0755)
+	if err := os.MkdirAll(srcDir, 0755); err != nil {
+		t.Fatalf("failed to create directory: %v", err)
+	}
 
 	confPath := filepath.Join(repoDir, ".git-tag-inc.conf")
 	err := os.WriteFile(confPath, []byte("Envs: qa, int"), 0644)

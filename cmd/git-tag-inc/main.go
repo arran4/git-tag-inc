@@ -64,7 +64,7 @@ func main() {
 			log.Fatalf("Error loading config %s: %v", *configFlag, err)
 		}
 	} else {
-		gittaginc.LoadConfig(".git-tag-inc.conf")
+		_ = gittaginc.LoadConfig(".git-tag-inc.conf")
 	}
 
 	args := flag.Args()
