@@ -205,6 +205,9 @@ func (t *Tag) String() string {
 var parseTagRe *regexp.Regexp
 var parseTagReLock sync.RWMutex
 
+// TODO: Refactor ParseTag entirely into a custom token-based parser.
+// The current dynamically generated regular expression limits extensibility
+// and creates complexity when configuring custom environments and stages.
 func getParseTagRe() *regexp.Regexp {
 	parseTagReLock.Lock()
 	defer parseTagReLock.Unlock()
