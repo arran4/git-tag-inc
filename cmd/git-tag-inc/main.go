@@ -39,7 +39,6 @@ var (
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
 	mode = flag.String("mode", "auto", "Naming mode: auto, semver, legacy, or arraneous")
-	configFlag = flag.String("config", "", "Path to a configuration file. If specified and it doesn't exist, the program will fail.")
 	baseVersion      = flag.String("base-version", "", "String mode: explicit base version to increment. If '-' is provided, reads from stdin. Operates entirely offline and bypasses git repository checks.")
 
 	out io.Writer = os.Stderr
@@ -58,14 +57,6 @@ var (
 func main() {
 	flag.Usage = Usage
 	flag.Parse()
-
-	if *configFlag != "" {
-		if err := gittaginc.LoadConfig(*configFlag); err != nil {
-			log.Fatalf("Error loading config %s: %v", *configFlag, err)
-		}
-	} else {
-		_ = gittaginc.LoadConfig(".git-tag-inc.conf")
-	}
 
 	args := flag.Args()
 	hasDash := false
@@ -284,10 +275,13 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 
 func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag, error) {
 	t, err := FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
-		if env != "" && current.EnvName != env {
+		if env == "test" && current.Test == nil {
 			return false
 		}
-		if env == "" && current.Env != nil {
+		if env == "uat" && current.Uat == nil {
+			return false
+		}
+		if env == "" && (current.Uat != nil || current.Test != nil) {
 			return false
 		}
 		return last.LessThan(current)
