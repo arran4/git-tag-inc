@@ -21,6 +21,26 @@ builds:
     ignore:
       - goos: windows
         goarch: arm
+  -
+    id: "git-tag-cmp"
+    binary: "git-tag-cmp"
+    dir: cmd/git-tag-cmp
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+      - 7
+    ignore:
+      - goos: windows
+        goarch: arm
 archives:
   -
     format_overrides:
