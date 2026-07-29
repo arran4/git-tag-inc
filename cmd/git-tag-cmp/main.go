@@ -4,11 +4,54 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/arran4/git-tag-inc"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 )
+
+func findHighestVersionTag(r *git.Repository) (*gittaginc.Tag, error) {
+	iter, err := r.Tags()
+	if err != nil {
+		return nil, err
+	}
+	var highest *gittaginc.Tag
+	if err := iter.ForEach(func(ref *plumbing.Reference) error {
+		t := gittaginc.ParseTag(ref.Name().Short())
+		if t == nil {
+			return nil
+		}
+		t.Hash = ref.Hash().String()
+		if highest == nil || highest.LessThan(t) {
+			highest = t
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return highest, nil
+}
+
+func getTagFromStrOrPath(input string) *gittaginc.Tag {
+	// check if it's a file path
+	if strings.HasPrefix(input, "/") || strings.HasPrefix(input, "./") || strings.HasPrefix(input, "../") {
+		absPath, err := filepath.Abs(input)
+		if err == nil {
+			r, err := git.PlainOpen(absPath)
+			if err == nil {
+				// Get the highest tag in this repo
+				tag, _ := findHighestVersionTag(r)
+				if tag != nil {
+					return tag
+				}
+			}
+		}
+	}
+	return gittaginc.ParseTag(input)
+}
 
 func main() {
 	var input string
@@ -34,9 +77,7 @@ func main() {
 
 	// First try to parse with standard operators
 	// We need to order the operators from longest to shortest in regex
-	// OR use word boundaries where applicable to prevent partial matches like 'le' matching in 'lessthan'.
-	// Using alternating longest to shortest helps `.+?` non-greedy match.
-	re := regexp.MustCompile(`(?i)^(.+?)(less-than-or-equal|lessthanorequal|greater-than-or-equal|greaterthanorequal|less-than|lessthan|greater-than|greaterthan|not-equal|notequal|equals|equal|<=|>=|<|>|==|!=|-lt|-le|-gt|-ge|-eq|-ne|lt|le|gt|ge|eq|ne)(.+?)$`)
+	re := regexp.MustCompile(`(?i)^(.+?)(more-recent-than-or-equal|morerecentthanorequal|older-than-or-equal|olderthanorequal|less-than-or-equal|lessthanorequal|greater-than-or-equal|greaterthanorequal|more-recent-than|morerecentthan|older-than|olderthan|newer-than|newerthan|less-than|lessthan|greater-than|greaterthan|not-equal|notequal|equals|equal|<=|>=|<|>|==|!=|-lt|-le|-gt|-ge|-eq|-ne|lt|le|gt|ge|eq|ne)(.+?)$`)
 	matches := re.FindStringSubmatch(input)
 
 	var tag1Str, op, tag2Str string
@@ -58,15 +99,15 @@ func main() {
 		}
 	}
 
-	tag1 := gittaginc.ParseTag(tag1Str)
+	tag1 := getTagFromStrOrPath(tag1Str)
 	if tag1 == nil {
-		fmt.Fprintf(os.Stderr, "Invalid tag: %s\n", tag1Str)
+		fmt.Fprintf(os.Stderr, "Invalid tag or path: %s\n", tag1Str)
 		os.Exit(2)
 	}
 
-	tag2 := gittaginc.ParseTag(tag2Str)
+	tag2 := getTagFromStrOrPath(tag2Str)
 	if tag2 == nil {
-		fmt.Fprintf(os.Stderr, "Invalid tag: %s\n", tag2Str)
+		fmt.Fprintf(os.Stderr, "Invalid tag or path: %s\n", tag2Str)
 		os.Exit(2)
 	}
 
@@ -76,13 +117,13 @@ func main() {
 
 	result := false
 	switch op {
-	case "<", "-lt", "lt", "less-than", "lessthan":
+	case "<", "-lt", "lt", "less-than", "lessthan", "older-than", "olderthan":
 		result = lessThan
-	case "<=", "-le", "le", "less-than-or-equal", "lessthanorequal":
+	case "<=", "-le", "le", "less-than-or-equal", "lessthanorequal", "older-than-or-equal", "olderthanorequal":
 		result = lessThan || equal
-	case ">", "-gt", "gt", "greater-than", "greaterthan":
+	case ">", "-gt", "gt", "greater-than", "greaterthan", "newer-than", "newerthan", "more-recent-than", "morerecentthan":
 		result = greaterThan
-	case ">=", "-ge", "ge", "greater-than-or-equal", "greaterthanorequal":
+	case ">=", "-ge", "ge", "greater-than-or-equal", "greaterthanorequal", "newer-than-or-equal", "newerthanorequal", "more-recent-than-or-equal", "morerecentthanorequal":
 		result = greaterThan || equal
 	case "==", "-eq", "eq", "equal", "equals":
 		result = equal

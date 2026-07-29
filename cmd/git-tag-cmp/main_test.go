@@ -76,8 +76,8 @@ func TestMain(t *testing.T) {
 		{"stdin_full_word_ops", []string{}, "v1.0.0 less-than-or-equal v2.0.0", 0, "true\n"},
 
 		{"invalid_format", []string{"v1.0.0v2.0.0"}, "", 2, "Invalid format. Expected <tag1> <op> <tag2>\n"},
-		{"invalid_tag1", []string{"invalid<v1.0.0"}, "", 2, "Invalid tag: invalid\n"},
-		{"invalid_tag2", []string{"v1.0.0<invalid"}, "", 2, "Invalid tag: invalid\n"},
+		{"invalid_tag1", []string{"invalid<v1.0.0"}, "", 2, "Invalid tag or path: invalid\n"},
+		{"invalid_tag2", []string{"v1.0.0<invalid"}, "", 2, "Invalid tag or path: invalid\n"},
 	}
 
 	for _, tc := range tests {
