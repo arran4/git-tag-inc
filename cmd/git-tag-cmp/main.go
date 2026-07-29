@@ -33,21 +33,24 @@ func main() {
 	}
 
 	// First try to parse with standard operators
-	re := regexp.MustCompile(`^(.+?)(<=|>=|<|>|==|!=|-lt|-le|-gt|-ge|-eq|-ne|lt|le|gt|ge|eq|ne)(.+?)$`)
+	// We need to order the operators from longest to shortest in regex
+	// OR use word boundaries where applicable to prevent partial matches like 'le' matching in 'lessthan'.
+	// Using alternating longest to shortest helps `.+?` non-greedy match.
+	re := regexp.MustCompile(`(?i)^(.+?)(less-than-or-equal|lessthanorequal|greater-than-or-equal|greaterthanorequal|less-than|lessthan|greater-than|greaterthan|not-equal|notequal|equals|equal|<=|>=|<|>|==|!=|-lt|-le|-gt|-ge|-eq|-ne|lt|le|gt|ge|eq|ne)(.+?)$`)
 	matches := re.FindStringSubmatch(input)
 
 	var tag1Str, op, tag2Str string
 
 	if len(matches) == 4 {
 		tag1Str = strings.TrimSpace(matches[1])
-		op = matches[2]
+		op = strings.ToLower(matches[2])
 		tag2Str = strings.TrimSpace(matches[3])
 	} else {
 		// Try parsing space separated
 		parts := strings.Fields(input)
 		if len(parts) == 3 {
 			tag1Str = parts[0]
-			op = parts[1]
+			op = strings.ToLower(parts[1])
 			tag2Str = parts[2]
 		} else {
 			fmt.Fprintf(os.Stderr, "Invalid format. Expected <tag1> <op> <tag2>\n")
@@ -73,17 +76,17 @@ func main() {
 
 	result := false
 	switch op {
-	case "<", "-lt", "lt":
+	case "<", "-lt", "lt", "less-than", "lessthan":
 		result = lessThan
-	case "<=", "-le", "le":
+	case "<=", "-le", "le", "less-than-or-equal", "lessthanorequal":
 		result = lessThan || equal
-	case ">", "-gt", "gt":
+	case ">", "-gt", "gt", "greater-than", "greaterthan":
 		result = greaterThan
-	case ">=", "-ge", "ge":
+	case ">=", "-ge", "ge", "greater-than-or-equal", "greaterthanorequal":
 		result = greaterThan || equal
-	case "==", "-eq", "eq":
+	case "==", "-eq", "eq", "equal", "equals":
 		result = equal
-	case "!=", "-ne", "ne":
+	case "!=", "-ne", "ne", "not-equal", "notequal":
 		result = !equal
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown operator: %s\n", op)

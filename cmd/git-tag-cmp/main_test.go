@@ -55,11 +55,25 @@ func TestMain(t *testing.T) {
 		{"word_eq_true", []string{"v1.0.0", "eq", "v1.0.0"}, "", 0, "true\n"},
 		{"word_ne_true", []string{"v1.0.0", "ne", "v2.0.0"}, "", 0, "true\n"},
 
+		{"full_word_lessthan_true", []string{"v1.0.0", "lessthan", "v2.0.0"}, "", 0, "true\n"},
+		{"full_word_less-than_true", []string{"v1.0.0", "less-than", "v2.0.0"}, "", 0, "true\n"},
+		{"full_word_lessthanorequal_true", []string{"v1.0.0", "lessthanorequal", "v2.0.0"}, "", 0, "true\n"},
+		{"full_word_less-than-or-equal_true", []string{"v1.0.0", "less-than-or-equal", "v2.0.0"}, "", 0, "true\n"},
+		{"full_word_greaterthan_true", []string{"v2.0.0", "greaterthan", "v1.0.0"}, "", 0, "true\n"},
+		{"full_word_greater-than_true", []string{"v2.0.0", "greater-than", "v1.0.0"}, "", 0, "true\n"},
+		{"full_word_greaterthanorequal_true", []string{"v2.0.0", "greaterthanorequal", "v1.0.0"}, "", 0, "true\n"},
+		{"full_word_greater-than-or-equal_true", []string{"v2.0.0", "greater-than-or-equal", "v1.0.0"}, "", 0, "true\n"},
+		{"full_word_equal_true", []string{"v1.0.0", "equal", "v1.0.0"}, "", 0, "true\n"},
+		{"full_word_equals_true", []string{"v1.0.0", "equals", "v1.0.0"}, "", 0, "true\n"},
+		{"full_word_notequal_true", []string{"v1.0.0", "notequal", "v2.0.0"}, "", 0, "true\n"},
+		{"full_word_not-equal_true", []string{"v1.0.0", "not-equal", "v2.0.0"}, "", 0, "true\n"},
+
 		{"spaced_args", []string{"v1.0.0", "<=", "v2.0.0"}, "", 0, "true\n"},
 
 		{"stdin", []string{}, "v1.0.0 < v2.0.0", 0, "true\n"},
 		{"stdin_bash_ops", []string{}, "v1.0.0 -le v2.0.0", 0, "true\n"},
 		{"stdin_word_ops", []string{}, "v1.0.0 le v2.0.0", 0, "true\n"},
+		{"stdin_full_word_ops", []string{}, "v1.0.0 less-than-or-equal v2.0.0", 0, "true\n"},
 
 		{"invalid_format", []string{"v1.0.0v2.0.0"}, "", 2, "Invalid format. Expected <tag1> <op> <tag2>\n"},
 		{"invalid_tag1", []string{"invalid<v1.0.0"}, "", 2, "Invalid tag: invalid\n"},
