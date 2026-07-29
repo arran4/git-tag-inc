@@ -76,6 +76,11 @@ nfpms:
         type: doc
         file_info:
           mode: 0644
+      - src: ./man/git-tag-cmp.1
+        dst: /usr/share/man/man1/git-tag-cmp.1
+        type: doc
+        file_info:
+          mode: 0644
 
 homebrew_casks:
   -
