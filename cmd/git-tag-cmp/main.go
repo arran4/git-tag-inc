@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// First try to parse with standard operators
-	re := regexp.MustCompile(`^(.+?)(<=|>=|<|>|==|!=|-lt|-le|-gt|-ge|-eq|-ne)(.+?)$`)
+	re := regexp.MustCompile(`^(.+?)(<=|>=|<|>|==|!=|-lt|-le|-gt|-ge|-eq|-ne|lt|le|gt|ge|eq|ne)(.+?)$`)
 	matches := re.FindStringSubmatch(input)
 
 	var tag1Str, op, tag2Str string
@@ -73,17 +73,17 @@ func main() {
 
 	result := false
 	switch op {
-	case "<", "-lt":
+	case "<", "-lt", "lt":
 		result = lessThan
-	case "<=", "-le":
+	case "<=", "-le", "le":
 		result = lessThan || equal
-	case ">", "-gt":
+	case ">", "-gt", "gt":
 		result = greaterThan
-	case ">=", "-ge":
+	case ">=", "-ge", "ge":
 		result = greaterThan || equal
-	case "==", "-eq":
+	case "==", "-eq", "eq":
 		result = equal
-	case "!=", "-ne":
+	case "!=", "-ne", "ne":
 		result = !equal
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown operator: %s\n", op)

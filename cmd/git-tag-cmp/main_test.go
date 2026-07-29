@@ -48,10 +48,18 @@ func TestMain(t *testing.T) {
 		{"bash_eq_true", []string{"v1.0.0", "-eq", "v1.0.0"}, "", 0, "true\n"},
 		{"bash_ne_true", []string{"v1.0.0", "-ne", "v2.0.0"}, "", 0, "true\n"},
 
+		{"word_lt_true", []string{"v1.0.0", "lt", "v2.0.0"}, "", 0, "true\n"},
+		{"word_le_true", []string{"v1.0.0", "le", "v2.0.0"}, "", 0, "true\n"},
+		{"word_gt_true", []string{"v2.0.0", "gt", "v1.0.0"}, "", 0, "true\n"},
+		{"word_ge_true", []string{"v2.0.0", "ge", "v1.0.0"}, "", 0, "true\n"},
+		{"word_eq_true", []string{"v1.0.0", "eq", "v1.0.0"}, "", 0, "true\n"},
+		{"word_ne_true", []string{"v1.0.0", "ne", "v2.0.0"}, "", 0, "true\n"},
+
 		{"spaced_args", []string{"v1.0.0", "<=", "v2.0.0"}, "", 0, "true\n"},
 
 		{"stdin", []string{}, "v1.0.0 < v2.0.0", 0, "true\n"},
 		{"stdin_bash_ops", []string{}, "v1.0.0 -le v2.0.0", 0, "true\n"},
+		{"stdin_word_ops", []string{}, "v1.0.0 le v2.0.0", 0, "true\n"},
 
 		{"invalid_format", []string{"v1.0.0v2.0.0"}, "", 2, "Invalid format. Expected <tag1> <op> <tag2>\n"},
 		{"invalid_tag1", []string{"invalid<v1.0.0"}, "", 2, "Invalid tag: invalid\n"},
