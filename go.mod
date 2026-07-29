@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-git/go-git/v5 v5.19.1
+	github.com/hashicorp/go-version v1.9.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/image v0.41.0
 )

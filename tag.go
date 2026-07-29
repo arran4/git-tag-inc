@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/hashicorp/go-version"
 )
 
 func ptr(i int) *int {
@@ -78,102 +80,15 @@ func (t *Tag) CopyFrom(other *Tag) {
 	*t = *clone
 }
 
-type stageRankType int
 
-const (
-	rankAlpha   stageRankType = 0
-	rankBeta    stageRankType = 1
-	rankRC      stageRankType = 2
-	rankNext    stageRankType = 3
-	rankRelease stageRankType = 4
-	rankOther   stageRankType = 5
-)
-
-func stageRank(n string) stageRankType {
-	switch strings.ToLower(n) {
-	case "alpha":
-		return rankAlpha
-	case "beta":
-		return rankBeta
-	case "rc":
-		return rankRC
-	case "next":
-		return rankNext
-	default:
-		if n == "" {
-			return rankRelease
-		}
-		return rankOther
-	}
-}
 
 func (t *Tag) LessThan(other *Tag) bool {
-	if t.Major != other.Major {
-		return t.Major < other.Major
+	v1, err1 := version.NewVersion(t.String())
+	v2, err2 := version.NewVersion(other.String())
+	if err1 == nil && err2 == nil {
+		return v1.LessThan(v2)
 	}
-	if t.Minor != other.Minor {
-		return t.Minor < other.Minor
-	}
-	if t.Patch != other.Patch {
-		return t.Patch < other.Patch
-	}
-
-	if stageRank(t.StageName) != stageRank(other.StageName) {
-		return stageRank(t.StageName) < stageRank(other.StageName)
-	}
-	if t.Stage != nil || other.Stage != nil {
-		tv := 0
-		ov := 0
-		if t.Stage != nil {
-			tv = *t.Stage
-		}
-		if other.Stage != nil {
-			ov = *other.Stage
-		}
-		if tv != ov {
-			return tv < ov
-		}
-	}
-
-	var tv *int = nil
-	if t.Uat != nil {
-		tv = t.Uat
-	} else if t.Test != nil {
-		tv = t.Test
-	}
-	var ov *int = nil
-	if other.Uat != nil {
-		ov = other.Uat
-	} else if other.Test != nil {
-		ov = other.Test
-	}
-	if tv == nil {
-		return false
-	}
-	if ov == nil {
-		return true
-	}
-	if *tv < *ov {
-		return true
-	}
-	if *tv == *ov {
-		if other.Uat != nil && t.Test != nil {
-			return true
-		}
-	}
-
-	rv := 0
-	ovv := 0
-	if t.Release != nil {
-		rv = *t.Release
-	}
-	if other.Release != nil {
-		ovv = *other.Release
-	}
-	if rv != ovv {
-		return rv < ovv
-	}
-	return false
+	return t.String() < other.String()
 }
 
 func (t *Tag) String() string {

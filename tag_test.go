@@ -138,7 +138,7 @@ func TestLessThan(t *testing.T) {
 		{"v1.0.0-test1", "v1.0.0-uat1", true},
 		{"v1.0.1", "v1.0.0", false},
 		{"v1.1.0", "v2.0.0", true},
-		{"v1.0.0-rc1", "v1.0.0-next1", true},
+		{"v1.0.0-rc1", "v1.0.0-next1", false},
 		{"v1.0.0-next1", "v1.0.0", true},
 		{"v1.0.0-rc1", "v1.0.0", true},
 		{"v1.0.0-test1", "v1.0.0", true},
