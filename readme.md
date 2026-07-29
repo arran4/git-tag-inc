@@ -142,3 +142,17 @@ If you install `go-md2man` you can regenerate it from the Markdown source:
 ```bash
 go-md2man -in=man/git-tag-inc.md -out=man/git-tag-inc.1
 ```
+
+## git-tag-cmp
+
+You can use the included `git-tag-cmp` tool to compare tags or directories containing git repositories.
+
+```bash
+$ git-tag-cmp v1.2.3 <= v2.0.0
+true
+
+$ git-tag-cmp ../project1-old newer-than ../project1-new
+false
+```
+
+See the `man/git-tag-cmp.md` manual for the full list of supported operators.

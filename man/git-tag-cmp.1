@@ -1,0 +1,87 @@
+.nh
+.TH git-tag-cmp(1) Manual
+.SH Name
+\fBgit-tag-cmp\fR \- compare two git version tags or repositories
+
+.SH Synopsis
+.EX
+git-tag-cmp <tag1|repo1> <op> <tag2|repo2>
+git-tag-cmp "<tag1|repo1> <op> <tag2|repo2>"
+.EE
+
+.SH Description
+\fBgit-tag-cmp\fR takes two semantic version tags (or paths to git repositories) and a comparison operator and returns an exit code indicating whether the statement is true (0) or false (1), as well as printing "true" or "false" to stdout.
+
+.PP
+If a path to a git repository (starting with \fB/\fR, \fB\&./\fR, or \fB\&../\fR) is provided instead of a tag, \fBgit-tag-cmp\fR will open the repository and use its highest version tag for the comparison.
+
+.PP
+This utility parses tags strictly using the same logic and ranking as \fBgit-tag-inc(1)\fR\&.
+
+.SH Operands
+.IP \(bu 2
+\fB<tag1|repo1>\fR: A semantic version tag string (e.g. \fBv1.2.3-alpha1\fR) or a path to a git repository.
+.IP \(bu 2
+\fB<op>\fR: The comparison operator. Supports standard mathematical symbols, bash-style operators, and word equivalents. See \fBOperators\fP below.
+.IP \(bu 2
+\fB<tag2|repo2>\fR: A semantic version tag string (e.g. \fBv1.2.3-beta1\fR) or a path to a git repository.
+
+.SH Operators
+.IP \(bu 2
+\fB<\fR | \fB-lt\fR | \fBlt\fR | \fBless-than\fR | \fBlessthan\fR | \fBolder-than\fR | \fBolderthan\fR
+.IP \(bu 2
+\fB<=\fR | \fB-le\fR | \fBle\fR | \fBless-than-or-equal\fR | \fBlessthanorequal\fR | \fBolder-than-or-equal\fR | \fBolderthanorequal\fR
+.IP \(bu 2
+\fB>\fR | \fB-gt\fR | \fBgt\fR | \fBgreater-than\fR | \fBgreaterthan\fR | \fBnewer-than\fR | \fBnewerthan\fR | \fBmore-recent-than\fR | \fBmorerecentthan\fR
+.IP \(bu 2
+\fB>=\fR | \fB-ge\fR | \fBge\fR | \fBgreater-than-or-equal\fR | \fBgreaterthanorequal\fR | \fBnewer-than-or-equal\fR | \fBnewerthanorequal\fR | \fBmore-recent-than-or-equal\fR | \fBmorerecentthanorequal\fR
+.IP \(bu 2
+\fB==\fR | \fB-eq\fR | \fBeq\fR | \fBequal\fR | \fBequals\fR
+.IP \(bu 2
+\fB!=\fR | \fB-ne\fR | \fBne\fR | \fBnot-equal\fR | \fBnotequal\fR
+
+.SH Input Forms
+The tool supports multiple input forms for convenience:
+1. \fBMultiple arguments:\fP \fBgit-tag-cmp v1.0.0 lt v2.0.0\fR
+2. \fBSingle string:\fP \fBgit-tag-cmp "v1.0.0<=v2.0.0"\fR
+3. \fBStandard input (stdin):\fP \fBecho "v1.0.0 < v2.0.0" | git-tag-cmp\fR
+
+.SH Examples
+Compare two specific tags:
+
+.EX
+$ git-tag-cmp v1.2.3 <= v2.0.0
+true
+.EE
+
+.PP
+Use bash-style operators:
+
+.EX
+$ git-tag-cmp v2.0.0 -gt v1.0.0
+true
+.EE
+
+.PP
+Compare two repositories to see which is newer:
+
+.EX
+$ git-tag-cmp ../project1-old gt ../project1-new
+false
+.EE
+
+.PP
+Evaluate dynamically generated tags from a script:
+
+.EX
+if git-tag-cmp "$TAG1" newer-than "$TAG2"; then
+  echo "TAG1 is newer"
+fi
+.EE
+
+.SH See also
+\fBgit-tag-inc(1)\fR, \fBgit-tag(1)\fR
+
+.SH Author
+Arran Ubels arran@ubels.com.au
+\[la]mailto:arran@ubels.com.au\[ra]
