@@ -380,7 +380,7 @@ func ParseTag(tag string) *Tag {
 			}
 		}
 		s = nextS
-		compName, padLen, valPtr, nextS = extractComponent(s) // get next component
+		compName, _, valPtr, nextS = extractComponent(s) // get next component (padLen not needed for release)
 	}
 
 	// 3. Check for release
