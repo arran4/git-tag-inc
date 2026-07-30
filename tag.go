@@ -8,10 +8,8 @@ package gittaginc
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func ptr(i int) *int {
@@ -220,54 +218,182 @@ func (t *Tag) String() string {
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
 
-var parseTagRe *regexp.Regexp
-var parseTagOnce sync.Once
-
-func getParseTagRe() *regexp.Regexp {
-	parseTagOnce.Do(func() {
-		parseTagRe = regexp.MustCompile(`^v(\d+)\.(\d+)\.(\d+)(?:(?:-|\.)((?:alpha|beta|rc|next))(?:(?:-|\.?)((?:0*)(\d+))))?(?:(?:-|\.)((?:test|uat))(?:(?:-|\.?)((?:0*)(\d+))))?(?:(?:-|\.)(\d+))?$`)
-	})
-	return parseTagRe
-}
-
 func ParseTag(tag string) *Tag {
-	m := getParseTagRe().FindStringSubmatch(tag)
-	t := &Tag{}
-	if len(m) == 0 {
+	if !strings.HasPrefix(tag, "v") {
 		return nil
 	}
-	t.Major, _ = strconv.Atoi(m[1])
-	t.Minor, _ = strconv.Atoi(m[2])
-	t.Patch, _ = strconv.Atoi(m[3])
-	base := fmt.Sprintf("v%d.%d.%d", t.Major, t.Minor, t.Patch)
-	remainder := tag[len(base):]
-	if strings.Contains(remainder, ".") {
+
+	// Remove 'v' prefix
+	s := tag[1:]
+	t := &Tag{}
+
+	// Parse Major
+	dotIdx := strings.Index(s, ".")
+	if dotIdx == -1 {
+		return nil
+	}
+	majorStr := s[:dotIdx]
+	var err error
+	t.Major, err = strconv.Atoi(majorStr)
+	if err != nil {
+		return nil
+	}
+	s = s[dotIdx+1:]
+
+	// Parse Minor
+	dotIdx = strings.Index(s, ".")
+	if dotIdx == -1 {
+		return nil
+	}
+	minorStr := s[:dotIdx]
+	t.Minor, err = strconv.Atoi(minorStr)
+	if err != nil {
+		return nil
+	}
+	s = s[dotIdx+1:]
+
+	// Parse Patch
+	patchEndIdx := len(s)
+	for i, c := range s {
+		if c < '0' || c > '9' {
+			patchEndIdx = i
+			break
+		}
+	}
+	if patchEndIdx == 0 {
+		return nil
+	}
+	patchStr := s[:patchEndIdx]
+	t.Patch, err = strconv.Atoi(patchStr)
+	if err != nil {
+		return nil
+	}
+
+	s = s[patchEndIdx:]
+
+	// If nothing remains, it's just vX.Y.Z
+	if len(s) == 0 {
+		t.Mode = ModeLegacy // Default to legacy, although mode only really matters for extensions
+		return t
+	}
+
+	if strings.Contains(s, ".") {
 		t.Mode = ModeSemver
 	} else {
 		t.Mode = ModeLegacy
 	}
-	if m[4] != "" {
-		t.StageName = strings.ToLower(m[4])
-		t.StagePad = len(m[5])
-		v, _ := strconv.Atoi(m[6])
-		t.Stage = &v
-	}
-	if m[7] != "" {
-		t.Pad = len(m[8])
-		v, _ := strconv.Atoi(m[9])
-		switch strings.ToLower(m[7]) {
-		case "test":
-			t.Test = &v
-		case "uat":
-			t.Uat = &v
-		default:
-			return nil
+
+	// Helper function to extract a component and its digits
+	// Returns: componentName, padLen, value, remaining string
+	extractComponent := func(str string) (string, int, *int, string) {
+		if len(str) == 0 {
+			return "", 0, nil, ""
 		}
+
+		// MUST start with separator
+		if str[0] != '-' && str[0] != '.' {
+			return "", 0, nil, str
+		}
+
+		sub := str[1:]
+		if len(sub) == 0 {
+			return "", 0, nil, str
+		}
+
+		// Find where letters end and digits begin
+		letterEndIdx := 0
+		for i, c := range sub {
+			if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
+				letterEndIdx = i + 1
+			} else {
+				break
+			}
+		}
+
+		// Check for release component (just digits)
+		if letterEndIdx == 0 {
+			digitEndIdx := 0
+			for i, c := range sub {
+				if c >= '0' && c <= '9' {
+					digitEndIdx = i + 1
+				} else {
+					break
+				}
+			}
+			if digitEndIdx > 0 {
+				val, _ := strconv.Atoi(sub[:digitEndIdx])
+				return "release", 0, ptr(val), sub[digitEndIdx:]
+			}
+			return "", 0, nil, str
+		}
+
+		compName := strings.ToLower(sub[:letterEndIdx])
+		sub = sub[letterEndIdx:]
+
+		// Check for separator between word and digits (e.g. . in rc.1 or - in rc-1, or none in rc1)
+		// The regex `(?:(?:-|\.?)((?:0*)(\d+)))` means separator is optional (`-`, `.`, or empty).
+		if len(sub) > 0 && (sub[0] == '-' || sub[0] == '.') {
+			sub = sub[1:]
+		}
+
+		digitEndIdx := 0
+		for i, c := range sub {
+			if c >= '0' && c <= '9' {
+				digitEndIdx = i + 1
+			} else {
+				break
+			}
+		}
+
+		if digitEndIdx == 0 {
+			// MUST have digits! "(\d+)" requires at least 1 digit.
+			return "", 0, nil, str
+		}
+
+		digitsStr := sub[:digitEndIdx]
+		val, _ := strconv.Atoi(digitsStr)
+		padLen := len(digitsStr) // t.Pad and t.StagePad are the total length of the match for `((?:0*)(\d+))`
+
+		return compName, padLen, ptr(val), sub[digitEndIdx:]
 	}
-	if len(m) >= 11 && m[10] != "" {
-		v, _ := strconv.Atoi(m[10])
-		t.Release = &v
+
+	// 1. Check for stage
+	compName, padLen, valPtr, nextS := extractComponent(s)
+	if compName == "alpha" || compName == "beta" || compName == "rc" || compName == "next" {
+		t.StageName = compName
+		t.StagePad = padLen
+		if valPtr != nil {
+			t.Stage = valPtr
+		}
+		s = nextS
+		compName, padLen, valPtr, nextS = extractComponent(s) // get next component
 	}
+
+	// 2. Check for env
+	if compName == "test" || compName == "uat" {
+		t.Pad = padLen
+		if valPtr != nil {
+			if compName == "test" {
+				t.Test = valPtr
+			} else {
+				t.Uat = valPtr
+			}
+		}
+		s = nextS
+		compName, padLen, valPtr, nextS = extractComponent(s) // get next component
+	}
+
+	// 3. Check for release
+	if compName == "release" && valPtr != nil {
+		t.Release = valPtr
+		s = nextS
+	}
+
+	// If there's unparsed garbage left, or we failed to parse completely matching the regex, return nil
+	if len(s) > 0 {
+		return nil
+	}
+
 	return t
 }
 

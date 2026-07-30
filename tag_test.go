@@ -40,17 +40,50 @@ func TestParseTag(t *testing.T) {
 		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
 		{"v1.2.3.1", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 		{"v1.2.3-1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
+
+		// Invalid formats (should return nil)
+		{"1.0.0", nil},                    // Missing 'v' prefix
+		{"v1.0", nil},                     // Missing patch version
+		{"v1.0.a", nil},                   // Invalid patch version
+		{"v1.0.0-beta", nil},              // Missing number in stage
+		{"v1.0.0-beta1-prod2", nil},       // Invalid env name
+		{"v1.0.0-beta1-test2-release", nil}, // Missing number in release
+		{"v1.0.0-1-test2", nil},           // Number without env
+		{"v1.0.0.", nil},
+
+		// Unseparated extensions (these fall into valid modes if they start with a valid prefix, e.g. beta, otherwise fail)
+		{"v1.0.0-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, Pad: 1, Test: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
+		{"v1.0.0-beta1-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Release: ptr(1), Mode: ModeLegacy}},
+		{"v1.0.0-beta1-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Pad: 1, Test: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
+
+		// Edge cases with 0 padding
+		{"v1.0.0-rc0-test0", &Tag{Major: 1, StageName: "rc", StagePad: 1, Stage: ptr(0), Pad: 1, Test: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-rc00-test00", &Tag{Major: 1, StageName: "rc", StagePad: 2, Stage: ptr(0), Pad: 2, Test: ptr(0), Mode: ModeLegacy}},
+
+		// Leading zero testing (len of capture group emulation)
+		{"v1.0.0-alpha005", &Tag{Major: 1, StageName: "alpha", StagePad: 3, Stage: ptr(5), Mode: ModeLegacy}},
+		{"v1.0.0-alpha0", &Tag{Major: 1, StageName: "alpha", StagePad: 1, Stage: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-alpha00", &Tag{Major: 1, StageName: "alpha", StagePad: 2, Stage: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-alpha10", &Tag{Major: 1, StageName: "alpha", StagePad: 2, Stage: ptr(10), Mode: ModeLegacy}},
+
+		// Additional Edge Cases
+		{"v0.0.0", &Tag{Major: 0, Minor: 0, Patch: 0, Mode: ModeLegacy}},
+		{"v10.20.30", &Tag{Major: 10, Minor: 20, Patch: 30, Mode: ModeLegacy}},
+		{"v1.0.0-test0", &Tag{Major: 1, Pad: 1, Test: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-uat00", &Tag{Major: 1, Pad: 2, Uat: ptr(0), Mode: ModeLegacy}},
 	}
 	for _, tt := range tests {
-		got := ParseTag(tt.tag)
+		t.Run(tt.tag, func(t *testing.T) {
+			got := ParseTag(tt.tag)
 
-		if !reflect.DeepEqual(got, tt.want) {
-			if got == nil || tt.want == nil {
-				t.Errorf("ParseTag(%s) = %#v, want %#v", tt.tag, got, tt.want)
-			} else if got.String() != tt.want.String() {
-				t.Errorf("ParseTag(%s) = %s, want %s", tt.tag, got.String(), tt.want.String())
+			if !reflect.DeepEqual(got, tt.want) {
+				if got == nil || tt.want == nil {
+					t.Errorf("ParseTag(%s) = %#v, want %#v", tt.tag, got, tt.want)
+				} else if got.String() != tt.want.String() {
+					t.Errorf("ParseTag(%s) = %s, want %s", tt.tag, got.String(), tt.want.String())
+				}
 			}
-		}
+		})
 	}
 }
 
