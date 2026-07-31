@@ -218,9 +218,9 @@ func (t *Tag) String() string {
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
 
-func ParseTag(tag string) *Tag {
+func ParseTag(tag string) (*Tag, error) {
 	if !strings.HasPrefix(tag, "v") {
-		return nil
+		return nil, fmt.Errorf("missing 'v' prefix")
 	}
 
 	// Remove 'v' prefix
@@ -230,25 +230,25 @@ func ParseTag(tag string) *Tag {
 	// Parse Major
 	dotIdx := strings.Index(s, ".")
 	if dotIdx == -1 {
-		return nil
+		return nil, fmt.Errorf("missing minor version component")
 	}
 	majorStr := s[:dotIdx]
 	var err error
 	t.Major, err = strconv.Atoi(majorStr)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("Version component `major` value `%s` invalid", majorStr)
 	}
 	s = s[dotIdx+1:]
 
 	// Parse Minor
 	dotIdx = strings.Index(s, ".")
 	if dotIdx == -1 {
-		return nil
+		return nil, fmt.Errorf("missing patch version component")
 	}
 	minorStr := s[:dotIdx]
 	t.Minor, err = strconv.Atoi(minorStr)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("Version component `minor` value `%s` invalid", minorStr)
 	}
 	s = s[dotIdx+1:]
 
@@ -261,12 +261,12 @@ func ParseTag(tag string) *Tag {
 		}
 	}
 	if patchEndIdx == 0 {
-		return nil
+		return nil, fmt.Errorf("Version component `patch` value `%s` invalid", s)
 	}
 	patchStr := s[:patchEndIdx]
 	t.Patch, err = strconv.Atoi(patchStr)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("Version component `patch` value `%s` invalid", patchStr)
 	}
 
 	s = s[patchEndIdx:]
@@ -274,7 +274,7 @@ func ParseTag(tag string) *Tag {
 	// If nothing remains, it's just vX.Y.Z
 	if len(s) == 0 {
 		t.Mode = ModeLegacy // Default to legacy, although mode only really matters for extensions
-		return t
+		return t, nil
 	}
 
 	if strings.Contains(s, ".") {
@@ -285,19 +285,19 @@ func ParseTag(tag string) *Tag {
 
 	// Helper function to extract a component and its digits
 	// Returns: componentName, padLen, value, remaining string
-	extractComponent := func(str string) (string, int, *int, string) {
+	extractComponent := func(str string) (string, int, *int, string, error) {
 		if len(str) == 0 {
-			return "", 0, nil, ""
+			return "", 0, nil, "", nil
 		}
 
 		// MUST start with separator
 		if str[0] != '-' && str[0] != '.' {
-			return "", 0, nil, str
+			return "", 0, nil, str, nil
 		}
 
 		sub := str[1:]
 		if len(sub) == 0 {
-			return "", 0, nil, str
+			return "", 0, nil, str, fmt.Errorf("missing component after separator")
 		}
 
 		// Find where letters end and digits begin
@@ -322,9 +322,9 @@ func ParseTag(tag string) *Tag {
 			}
 			if digitEndIdx > 0 {
 				val, _ := strconv.Atoi(sub[:digitEndIdx])
-				return "release", 0, ptr(val), sub[digitEndIdx:]
+				return "release", 0, ptr(val), sub[digitEndIdx:], nil
 			}
-			return "", 0, nil, str
+			return "", 0, nil, str, fmt.Errorf("invalid release component")
 		}
 
 		compName := strings.ToLower(sub[:letterEndIdx])
@@ -347,18 +347,21 @@ func ParseTag(tag string) *Tag {
 
 		if digitEndIdx == 0 {
 			// MUST have digits! "(\d+)" requires at least 1 digit.
-			return "", 0, nil, str
+			return "", 0, nil, str, fmt.Errorf("missing digits for component `%s`", compName)
 		}
 
 		digitsStr := sub[:digitEndIdx]
 		val, _ := strconv.Atoi(digitsStr)
 		padLen := len(digitsStr) // t.Pad and t.StagePad are the total length of the match for `((?:0*)(\d+))`
 
-		return compName, padLen, ptr(val), sub[digitEndIdx:]
+		return compName, padLen, ptr(val), sub[digitEndIdx:], nil
 	}
 
 	// 1. Check for stage
-	compName, padLen, valPtr, nextS := extractComponent(s)
+	compName, padLen, valPtr, nextS, err := extractComponent(s)
+	if err != nil {
+		return nil, err
+	}
 	if compName == "alpha" || compName == "beta" || compName == "rc" || compName == "next" {
 		t.StageName = compName
 		t.StagePad = padLen
@@ -366,7 +369,10 @@ func ParseTag(tag string) *Tag {
 			t.Stage = valPtr
 		}
 		s = nextS
-		compName, padLen, valPtr, nextS = extractComponent(s) // get next component
+		compName, padLen, valPtr, nextS, err = extractComponent(s) // get next component
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 2. Check for env
@@ -380,21 +386,26 @@ func ParseTag(tag string) *Tag {
 			}
 		}
 		s = nextS
-		compName, _, valPtr, nextS = extractComponent(s) // get next component (padLen not needed for release)
+		compName, _, valPtr, nextS, err = extractComponent(s) // get next component (padLen not needed for release)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 3. Check for release
 	if compName == "release" && valPtr != nil {
 		t.Release = valPtr
 		s = nextS
+	} else if compName != "" && compName != "release" && compName != "alpha" && compName != "beta" && compName != "rc" && compName != "next" && compName != "test" && compName != "uat" {
+		return nil, fmt.Errorf("unknown component `%s`", compName)
 	}
 
 	// If there's unparsed garbage left, or we failed to parse completely matching the regex, return nil
 	if len(s) > 0 {
-		return nil
+		return nil, fmt.Errorf("unparsed trailing characters: `%s`", s)
 	}
 
-	return t
+	return t, nil
 }
 
 func (t *Tag) applyIncrement(flags CmdFlags) {
