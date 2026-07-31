@@ -24,8 +24,8 @@ type Tag struct {
 	Stage     *int
 	StagePad  int
 
-	Test *int
-	Uat  *int
+	EnvName string
+	Env *int
 	Pad  int
 
 	Patch   int
@@ -52,14 +52,11 @@ func (t *Tag) Clone() *Tag {
 		v := *t.Stage
 		clone.Stage = &v
 	}
-	if t.Test != nil {
-		v := *t.Test
-		clone.Test = &v
+	if t.Env != nil {
+		v := *t.Env
+		clone.Env = &v
 	}
-	if t.Uat != nil {
-		v := *t.Uat
-		clone.Uat = &v
-	}
+	clone.EnvName = t.EnvName
 	if t.Release != nil {
 		v := *t.Release
 		clone.Release = &v
@@ -76,33 +73,14 @@ func (t *Tag) CopyFrom(other *Tag) {
 	*t = *clone
 }
 
-type stageRankType int
-
-const (
-	rankAlpha   stageRankType = 0
-	rankBeta    stageRankType = 1
-	rankRC      stageRankType = 2
-	rankNext    stageRankType = 3
-	rankRelease stageRankType = 4
-	rankOther   stageRankType = 5
-)
-
-func stageRank(n string) stageRankType {
-	switch strings.ToLower(n) {
-	case "alpha":
-		return rankAlpha
-	case "beta":
-		return rankBeta
-	case "rc":
-		return rankRC
-	case "next":
-		return rankNext
-	default:
-		if n == "" {
-			return rankRelease
-		}
-		return rankOther
+func stageRank(n string) int {
+	if n == "" {
+		return len(ConfiguredStagesMap) // Release
 	}
+	if rank, ok := ConfiguredStagesMap[strings.ToLower(n)]; ok {
+		return rank
+	}
+	return len(ConfiguredStagesMap) + 1 // Other
 }
 
 func (t *Tag) LessThan(other *Tag) bool {
@@ -132,31 +110,31 @@ func (t *Tag) LessThan(other *Tag) bool {
 			return tv < ov
 		}
 	}
+	var tv *int = t.Env
+	var ov *int = other.Env
 
-	var tv *int = nil
-	if t.Uat != nil {
-		tv = t.Uat
-	} else if t.Test != nil {
-		tv = t.Test
-	}
-	var ov *int = nil
-	if other.Uat != nil {
-		ov = other.Uat
-	} else if other.Test != nil {
-		ov = other.Test
-	}
-	if tv == nil {
+	if tv == nil && ov == nil {
+		// Both have no env. Check release next.
+	} else if tv == nil {
 		return false
-	}
-	if ov == nil {
+	} else if ov == nil {
 		return true
-	}
-	if *tv < *ov {
-		return true
-	}
-	if *tv == *ov {
-		if other.Uat != nil && t.Test != nil {
-			return true
+	} else if *tv != *ov {
+		return *tv < *ov
+	} else {
+		// Both have env and value is same. Compare env priorities.
+		tRank, tOk := ConfiguredEnvsMap[t.EnvName]
+		oRank, oOk := ConfiguredEnvsMap[other.EnvName]
+
+		if !tOk { tRank = len(ConfiguredEnvsMap) }
+		if !oOk { oRank = len(ConfiguredEnvsMap) }
+
+		if tRank != oRank {
+			// Higher rank number means lower priority (from 0 to n)
+			// Actually wait, let's look at original logic. If UAT vs Test, Test < UAT was returning true?
+			// if other.Uat != nil && t.Test != nil { return true } means Test < Uat
+			// So lower rank number (test=0, uat=1) means less than!
+			return tRank < oRank
 		}
 	}
 
@@ -180,10 +158,8 @@ func (t *Tag) String() string {
 		if t.Stage != nil {
 			ext += fmt.Sprintf("-%s%0*d", t.StageName, t.StagePad, *t.Stage)
 		}
-		if t.Uat != nil {
-			ext += fmt.Sprintf("-uat%0*d", t.Pad, *t.Uat)
-		} else if t.Test != nil {
-			ext += fmt.Sprintf("-test%0*d", t.Pad, *t.Test)
+		if t.Env != nil {
+			ext += fmt.Sprintf("-%s%0*d", t.EnvName, t.Pad, *t.Env)
 		}
 		if t.Release != nil {
 			ext += fmt.Sprintf(".%d", *t.Release)
@@ -192,20 +168,13 @@ func (t *Tag) String() string {
 		if t.Stage != nil {
 			ext += fmt.Sprintf("-%s.%0*d", t.StageName, t.StagePad, *t.Stage)
 		}
-		if t.Uat != nil {
+		if t.Env != nil {
 			if ext == "" {
-				ext += "-uat."
+				ext += fmt.Sprintf("-%s.", t.EnvName)
 			} else {
-				ext += ".uat."
+				ext += fmt.Sprintf(".%s.", t.EnvName)
 			}
-			ext += fmt.Sprintf("%0*d", t.Pad, *t.Uat)
-		} else if t.Test != nil {
-			if ext == "" {
-				ext += "-test."
-			} else {
-				ext += ".test."
-			}
-			ext += fmt.Sprintf("%0*d", t.Pad, *t.Test)
+			ext += fmt.Sprintf("%0*d", t.Pad, *t.Env)
 		}
 		if t.Release != nil {
 			if ext == "" {
@@ -217,6 +186,8 @@ func (t *Tag) String() string {
 	}
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
+
+
 
 func ParseTag(tag string) (*Tag, error) {
 	if !strings.HasPrefix(tag, "v") {
@@ -357,52 +328,42 @@ func ParseTag(tag string) (*Tag, error) {
 		return compName, padLen, ptr(val), sub[digitEndIdx:], nil
 	}
 
-	// 1. Check for stage
-	compName, padLen, valPtr, nextS, err := extractComponent(s)
-	if err != nil {
-		return nil, err
-	}
-	if compName == "alpha" || compName == "beta" || compName == "rc" || compName == "next" {
-		t.StageName = compName
-		t.StagePad = padLen
-		if valPtr != nil {
-			t.Stage = valPtr
-		}
-		s = nextS
-		compName, padLen, valPtr, nextS, err = extractComponent(s) // get next component
+// Parse arbitrary suffix components
+	for len(s) > 0 {
+		compName, padLen, valPtr, nextS, err := extractComponent(s)
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	// 2. Check for env
-	if compName == "test" || compName == "uat" {
-		t.Pad = padLen
-		if valPtr != nil {
-			if compName == "test" {
-				t.Test = valPtr
+		if _, ok := ConfiguredStagesMap[compName]; ok {
+			if t.StageName == "" {
+				t.StageName = compName
+				t.StagePad = padLen
+				if valPtr != nil {
+					t.Stage = valPtr
+				}
 			} else {
-				t.Uat = valPtr
+				return nil, fmt.Errorf("duplicate stage component `%s`", compName)
 			}
+		} else if _, ok := ConfiguredEnvsMap[compName]; ok {
+			if t.EnvName == "" {
+				t.EnvName = compName
+				t.Pad = padLen
+				if valPtr != nil {
+					t.Env = valPtr
+				}
+			} else {
+				return nil, fmt.Errorf("duplicate env component `%s`", compName)
+			}
+		} else if compName == "release" {
+			if valPtr != nil {
+				t.Release = valPtr
+			}
+		} else {
+			return nil, fmt.Errorf("unknown component `%s`", compName)
 		}
-		s = nextS
-		compName, _, valPtr, nextS, err = extractComponent(s) // get next component (padLen not needed for release)
-		if err != nil {
-			return nil, err
-		}
-	}
 
-	// 3. Check for release
-	if compName == "release" && valPtr != nil {
-		t.Release = valPtr
 		s = nextS
-	} else if compName != "" && compName != "release" && compName != "alpha" && compName != "beta" && compName != "rc" && compName != "next" && compName != "test" && compName != "uat" {
-		return nil, fmt.Errorf("unknown component `%s`", compName)
-	}
-
-	// If there's unparsed garbage left, or we failed to parse completely matching the regex, return nil
-	if len(s) > 0 {
-		return nil, fmt.Errorf("unparsed trailing characters: `%s`", s)
 	}
 
 	return t, nil
@@ -412,15 +373,8 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 	prevStage := t.Stage
 	prevStageName := strings.ToLower(t.StageName)
 	prevStagePad := t.StagePad
-	prevEnv := t.Uat
-	prevEnvType := "uat"
-	if prevEnv == nil {
-		prevEnv = t.Test
-		prevEnvType = "test"
-	}
-	if prevEnv == nil {
-		prevEnvType = ""
-	}
+	prevEnv := t.Env
+	prevEnvType := strings.ToLower(t.EnvName)
 	prevPad := t.Pad
 
 	if flags.Major {
@@ -435,8 +389,8 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		t.Stage = nil
 		t.StageName = ""
 		t.StagePad = 0
-		t.Uat = nil
-		t.Test = nil
+		t.Env = nil
+		t.EnvName = ""
 		prevStage = nil
 		prevStageName = ""
 		prevEnv = nil
@@ -453,8 +407,8 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		t.Stage = nil
 		t.StageName = ""
 		t.StagePad = 0
-		t.Uat = nil
-		t.Test = nil
+		t.Env = nil
+		t.EnvName = ""
 		prevStage = nil
 		prevStageName = ""
 		prevEnv = nil
@@ -464,15 +418,15 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		target := t.Patch
 		if flags.PatchValue != nil {
 			target = *flags.PatchValue
-		} else if (t.Test == nil || flags.Env != "") && (t.Uat == nil || flags.Env != "") && (t.Stage == nil || flags.Stage != "") {
+		} else if (t.Env == nil || flags.Env != "") && (t.Stage == nil || flags.Stage != "") {
 			target = t.Patch + 1
 		}
 		t.Patch = target
 		t.Stage = nil
 		t.StageName = ""
 		t.StagePad = 0
-		t.Uat = nil
-		t.Test = nil
+		t.Env = nil
+		t.EnvName = ""
 		t.Release = nil
 		prevStage = nil
 		prevStageName = ""
@@ -498,7 +452,6 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 				} else if requestedPad >= stagePad {
 					stagePad = requestedPad
 				}
-				// otherwise keep the default width of 2 when starting a new stage with single digits
 			}
 		}
 		z := 1
@@ -515,8 +468,8 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 		prevEnv = nil
 		prevEnvType = ""
 		prevPad = 0
-		t.Uat = nil
-		t.Test = nil
+		t.Env = nil
+		t.EnvName = ""
 		t.Release = nil
 	}
 
@@ -539,14 +492,11 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 				} else if requestedPad >= envPad {
 					envPad = requestedPad
 				}
-				// otherwise keep the default width of 2 when starting a new environment with single digits
 			}
 		}
 		z := 1
 		if prevEnv != nil {
-			if prevEnvType == "uat" && envName == "uat" {
-				z = *prevEnv + 1
-			} else if prevEnvType == "test" && envName == "test" {
+			if prevEnvType == envName {
 				z = *prevEnv + 1
 			} else {
 				z = *prevEnv
@@ -558,13 +508,8 @@ func (t *Tag) applyIncrement(flags CmdFlags) {
 			z = *flags.EnvValue
 		}
 		t.Pad = envPad
-		if envName == "uat" {
-			t.Uat = ptr(z)
-			t.Test = nil
-		} else {
-			t.Test = ptr(z)
-			t.Uat = nil
-		}
+		t.EnvName = envName
+		t.Env = ptr(z)
 		t.Release = nil
 	}
 
@@ -632,11 +577,8 @@ type decrease struct {
 }
 
 func envInfo(tag *Tag) (string, *int) {
-	if tag.Uat != nil {
-		return "uat", tag.Uat
-	}
-	if tag.Test != nil {
-		return "test", tag.Test
+	if tag.Env != nil {
+		return tag.EnvName, tag.Env
 	}
 	return "", nil
 }

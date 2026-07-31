@@ -7,7 +7,6 @@
 package gittaginc
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -37,36 +36,46 @@ type CmdFlags struct {
 
 func CommandsToFlags(args []string, mode string) CmdFlags {
 	c := CmdFlags{Valid: true, Mode: mode}
-	re := regexp.MustCompile(`^([a-z]+)(\d+)?$`)
 	for _, f := range args {
 		lower := strings.ToLower(f)
-		m := re.FindStringSubmatch(lower)
-		if len(m) == 0 {
+
+		// Extract name and digits manually instead of regexp
+		letterEndIdx := 0
+		for i, char := range lower {
+			if char >= 'a' && char <= 'z' {
+				letterEndIdx = i + 1
+			} else {
+				break
+			}
+		}
+		if letterEndIdx == 0 {
 			c.Valid = false
 			return c
 		}
-		name := m[1]
+
+		name := lower[:letterEndIdx]
+		digitsStr := lower[letterEndIdx:]
 		var value *int
-		if m[2] != "" {
-			v, err := strconv.Atoi(m[2])
+		if digitsStr != "" {
+			v, err := strconv.Atoi(digitsStr)
 			if err != nil {
 				c.Valid = false
 				return c
 			}
 			value = &v
 		}
-		switch name {
-		case "major":
+
+		if name == "major" {
 			c.Major = true
 			if value != nil {
 				c.MajorValue = value
 			}
-		case "minor":
+		} else if name == "minor" {
 			c.Minor = true
 			if value != nil {
 				c.MinorValue = value
 			}
-		case "patch":
+		} else if name == "patch" {
 			if mode == ModeArraneous {
 				c.Valid = false
 				return c
@@ -75,7 +84,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 			if value != nil {
 				c.PatchValue = value
 			}
-		case "release":
+		} else if name == "release" {
 			if mode == ModeArraneous {
 				c.Patch = true
 				if value != nil {
@@ -87,7 +96,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 					c.ReleaseValue = value
 				}
 			}
-		case "alpha", "beta", "rc", "next":
+		} else if _, ok := ConfiguredStagesMap[name]; ok {
 			if c.Stage != "" {
 				c.Valid = false
 				return c
@@ -95,10 +104,9 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 			c.Stage = name
 			if value != nil {
 				c.StageValue = value
-				digits := len(m[2])
-				c.StageDigits = digits
+				c.StageDigits = len(digitsStr)
 			}
-		case "test", "uat":
+		} else if _, ok := ConfiguredEnvsMap[name]; ok {
 			if c.Env != "" {
 				c.Valid = false
 				return c
@@ -106,10 +114,9 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 			c.Env = name
 			if value != nil {
 				c.EnvValue = value
-				digits := len(m[2])
-				c.EnvDigits = digits
+				c.EnvDigits = len(digitsStr)
 			}
-		default:
+		} else {
 			c.Valid = false
 			return c
 		}

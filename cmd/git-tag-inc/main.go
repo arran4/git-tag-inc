@@ -276,13 +276,10 @@ func GetHash(r *git.Repository, lastSimilar *gittaginc.Tag) (string, error) {
 
 func FindHighestSimilarVersionTag(r *git.Repository, env string) (*gittaginc.Tag, error) {
 	t, err := FindHVersionTag(r, func(last, current *gittaginc.Tag) bool {
-		if env == "test" && current.Test == nil {
+		if env != "" && (current.EnvName != env || current.Env == nil) {
 			return false
 		}
-		if env == "uat" && current.Uat == nil {
-			return false
-		}
-		if env == "" && (current.Uat != nil || current.Test != nil) {
+		if env == "" && current.Env != nil {
 			return false
 		}
 		return last.LessThan(current)

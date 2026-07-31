@@ -29,15 +29,15 @@ func TestParseTag(t *testing.T) {
 		{"v1.0.0-beta01-foo01", nil},
 		{"v1.0.0-unknown1", nil},
 		{"v1.2.3", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3}},
-		{"v1.2.3-test45", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Test: new(45), Pad: 2}},
-		{"v1.2.3-uat0045", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Uat: new(45), Pad: 4}},
+		{"v1.2.3-test45", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, EnvName: "test", Env: new(45), Pad: 2}},
+		{"v1.2.3-uat0045", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, EnvName: "uat", Env: new(45), Pad: 4}},
 		{"v1.2.3-alpha1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: new(1), StagePad: 0}},
-		{"v1.2.3-beta02-test03", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
-		{"v1.0.0-rc01-test02", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, Test: new(2), Pad: 2}},
-		{"v1.0.0-next02-test01", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, Test: new(1), Pad: 2}},
-		{"v1.0.0-beta007-uat012", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, Uat: new(12), Pad: 3}},
-		{"v1.0.0-beta1-test2.3", &Tag{Mode: ModeSemver, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, Test: new(2), Pad: 0, Release: new(3)}},
-		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, Test: new(3), Pad: 2}},
+		{"v1.2.3-beta02-test03", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
+		{"v1.0.0-rc01-test02", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, EnvName: "test", Env: new(2), Pad: 2}},
+		{"v1.0.0-next02-test01", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(1), Pad: 2}},
+		{"v1.0.0-beta007-uat012", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, EnvName: "uat", Env: new(12), Pad: 3}},
+		{"v1.0.0-beta1-test2.3", &Tag{Mode: ModeSemver, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, EnvName: "test", Env: new(2), Pad: 0, Release: new(3)}},
+		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
 		{"v1.2.3.1", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 		{"v1.2.3-1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 
@@ -48,17 +48,17 @@ func TestParseTag(t *testing.T) {
 		{"v1.0.0-beta", nil},              // Missing number in stage
 		{"v1.0.0-beta1-prod2", nil},       // Invalid env name
 		{"v1.0.0-beta1-test2-release", nil}, // Missing number in release
-		{"v1.0.0-1-test2", nil},           // Number without env
+		{"v1.0.0-1-test2", &Tag{Major: 1, Minor: 0, Patch: 0, Release: ptr(1), EnvName: "test", Env: ptr(2), Pad: 1, Mode: ModeLegacy}},           // Number without env
 		{"v1.0.0.", nil},
 
 		// Unseparated extensions (these fall into valid modes if they start with a valid prefix, e.g. beta, otherwise fail)
-		{"v1.0.0-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, Pad: 1, Test: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
+		{"v1.0.0-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, Pad: 1, EnvName: "test", Env: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
 		{"v1.0.0-beta1-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Release: ptr(1), Mode: ModeLegacy}},
-		{"v1.0.0-beta1-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Pad: 1, Test: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
+		{"v1.0.0-beta1-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Pad: 1, EnvName: "test", Env: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
 
 		// Edge cases with 0 padding
-		{"v1.0.0-rc0-test0", &Tag{Major: 1, StageName: "rc", StagePad: 1, Stage: ptr(0), Pad: 1, Test: ptr(0), Mode: ModeLegacy}},
-		{"v1.0.0-rc00-test00", &Tag{Major: 1, StageName: "rc", StagePad: 2, Stage: ptr(0), Pad: 2, Test: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-rc0-test0", &Tag{Major: 1, StageName: "rc", StagePad: 1, Stage: ptr(0), Pad: 1, EnvName: "test", Env: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-rc00-test00", &Tag{Major: 1, StageName: "rc", StagePad: 2, Stage: ptr(0), Pad: 2, EnvName: "test", Env: ptr(0), Mode: ModeLegacy}},
 
 		// Leading zero testing (len of capture group emulation)
 		{"v1.0.0-alpha005", &Tag{Major: 1, StageName: "alpha", StagePad: 3, Stage: ptr(5), Mode: ModeLegacy}},
@@ -69,8 +69,8 @@ func TestParseTag(t *testing.T) {
 		// Additional Edge Cases
 		{"v0.0.0", &Tag{Major: 0, Minor: 0, Patch: 0, Mode: ModeLegacy}},
 		{"v10.20.30", &Tag{Major: 10, Minor: 20, Patch: 30, Mode: ModeLegacy}},
-		{"v1.0.0-test0", &Tag{Major: 1, Pad: 1, Test: ptr(0), Mode: ModeLegacy}},
-		{"v1.0.0-uat00", &Tag{Major: 1, Pad: 2, Uat: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-test0", &Tag{Major: 1, Pad: 1, EnvName: "test", Env: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-uat00", &Tag{Major: 1, Pad: 2, EnvName: "uat", Env: ptr(0), Mode: ModeLegacy}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.tag, func(t *testing.T) {
@@ -96,10 +96,10 @@ func TestString(t *testing.T) {
 		{&Tag{Major: 0, Minor: 0, Patch: 0}, "v0.0.0", "v0.0.0"},
 		{&Tag{Major: 1, Minor: 2, Patch: 3}, "v1.2.3", "v1.2.3"},
 		{&Tag{Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2}, "v1.0.0-rc01", "v1.0.0-rc.01"},
-		{&Tag{Major: 0, Minor: 1, Patch: 2, Test: new(3), Pad: 2}, "v0.1.2-test03", "v0.1.2-test.03"},
-		{&Tag{Major: 2, Minor: 3, Patch: 4, StageName: "beta", Stage: new(2), StagePad: 2, Uat: new(1), Pad: 2}, "v2.3.4-beta02-uat01", "v2.3.4-beta.02.uat.01"},
-		{&Tag{Major: 5, Minor: 6, Patch: 7, StageName: "beta", Stage: new(2), StagePad: 3, Test: new(10), Pad: 3}, "v5.6.7-beta002-test010", "v5.6.7-beta.002.test.010"},
-		{&Tag{Major: 1, Minor: 0, Patch: 1, StageName: "alpha", Stage: new(1), StagePad: 2, Test: new(1), Pad: 2, Release: new(2)}, "v1.0.1-alpha01-test01.2", "v1.0.1-alpha.01.test.01.2"},
+		{&Tag{Major: 0, Minor: 1, Patch: 2, EnvName: "test", Env: new(3), Pad: 2}, "v0.1.2-test03", "v0.1.2-test.03"},
+		{&Tag{Major: 2, Minor: 3, Patch: 4, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "uat", Env: new(1), Pad: 2}, "v2.3.4-beta02-uat01", "v2.3.4-beta.02.uat.01"},
+		{&Tag{Major: 5, Minor: 6, Patch: 7, StageName: "beta", Stage: new(2), StagePad: 3, EnvName: "test", Env: new(10), Pad: 3}, "v5.6.7-beta002-test010", "v5.6.7-beta.002.test.010"},
+		{&Tag{Major: 1, Minor: 0, Patch: 1, StageName: "alpha", Stage: new(1), StagePad: 2, EnvName: "test", Env: new(1), Pad: 2, Release: new(2)}, "v1.0.1-alpha01-test01.2", "v1.0.1-alpha.01.test.01.2"},
 	}
 	for _, tt := range cases {
 		tt.tag.Mode = ModeLegacy
@@ -423,8 +423,8 @@ func TestTag_Clone(t *testing.T) {
 			StageName: "beta",
 			Stage:     new(1),
 			StagePad:  2,
-			Test:      new(2),
-			Uat:       new(3),
+			EnvName:   "uat",
+			Env:       new(3),
 			Pad:       4,
 			Patch:     5,
 			Release:   new(6),
@@ -442,8 +442,8 @@ func TestTag_Clone(t *testing.T) {
 		clone.StageName = "alpha"
 		*clone.Stage = 99
 		clone.StagePad = 100
-		*clone.Test = 101
-		*clone.Uat = 102
+		clone.EnvName = "test"
+		*clone.Env = 101
 		clone.Pad = 103
 		clone.Patch = 104
 		*clone.Release = 105
@@ -460,11 +460,11 @@ func TestTag_Clone(t *testing.T) {
 		if original.StagePad != 2 {
 			t.Errorf("original StagePad modified")
 		}
-		if *original.Test != 2 {
-			t.Errorf("original Test modified")
+		if original.EnvName != "uat" {
+			t.Errorf("original EnvName modified")
 		}
-		if *original.Uat != 3 {
-			t.Errorf("original Uat modified")
+		if *original.Env != 3 {
+			t.Errorf("original Env modified")
 		}
 		if original.Pad != 4 {
 			t.Errorf("original Pad modified")
