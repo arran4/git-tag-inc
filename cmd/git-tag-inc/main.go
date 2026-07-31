@@ -107,11 +107,12 @@ func main() {
 	}
 
 	if baseVersionStr != "" {
-		t := gittaginc.ParseTag(baseVersionStr)
-		if t == nil {
-			fmt.Fprintf(out, "Invalid base version tag: %s\n", baseVersionStr)
+		t, err := gittaginc.ParseTag(baseVersionStr)
+		if err != nil {
+			fmt.Fprintf(out, "Invalid base version tag: %s (%v)\n", baseVersionStr, err)
 			os.Exit(1)
 		}
+
 		if *mode != "auto" {
 			t.Mode = *mode
 		}
@@ -312,7 +313,7 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 		if *verbose {
 			fmt.Fprintf(out, "Ref: %s\n", ref.Name())
 		}
-		t := gittaginc.ParseTag(ref.Name().Short())
+		t, _ := gittaginc.ParseTag(ref.Name().Short())
 		if t == nil {
 			return nil
 		}

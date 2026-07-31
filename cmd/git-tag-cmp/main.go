@@ -20,7 +20,7 @@ func findHighestVersionTag(r *git.Repository) (*gittaginc.Tag, error) {
 	}
 	var highest *gittaginc.Tag
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
-		t := gittaginc.ParseTag(ref.Name().Short())
+		t, _ := gittaginc.ParseTag(ref.Name().Short())
 		if t == nil {
 			return nil
 		}
@@ -50,7 +50,8 @@ func getTagFromStrOrPath(input string) *gittaginc.Tag {
 			}
 		}
 	}
-	return gittaginc.ParseTag(input)
+	t, _ := gittaginc.ParseTag(input)
+	return t
 }
 
 func main() {

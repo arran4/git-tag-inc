@@ -74,7 +74,7 @@ func TestParseTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.tag, func(t *testing.T) {
-			got := ParseTag(tt.tag)
+			got, _ := ParseTag(tt.tag)
 
 			if !reflect.DeepEqual(got, tt.want) {
 				if got == nil || tt.want == nil {
@@ -149,7 +149,7 @@ func TestIncrement(t *testing.T) {
 		{"explicit patch", "v5.7.0", []string{"patch9"}, "v5.7.9"},
 	}
 	for _, tt := range tests {
-		tag := ParseTag(tt.start)
+		tag, _ := ParseTag(tt.start)
 		tag.Mode = ModeLegacy
 		flags := CommandsToFlags(tt.cmds, "default")
 		if err := tag.Increment(flags, false, false); err != nil {
@@ -180,8 +180,8 @@ func TestLessThan(t *testing.T) {
 		{"v1.0.0-test1.1", "v1.0.0-test1.2", true},
 	}
 	for _, tt := range cases {
-		l := ParseTag(tt.a)
-		r := ParseTag(tt.b)
+		l, _ := ParseTag(tt.a)
+		r, _ := ParseTag(tt.b)
 		if got := l.LessThan(r); got != tt.want {
 			t.Errorf("%s < %s got %v want %v", tt.a, tt.b, got, tt.want)
 		}
@@ -189,7 +189,7 @@ func TestLessThan(t *testing.T) {
 }
 
 func TestIncrementSequence(t *testing.T) {
-	tag := ParseTag("v0.0.1")
+	tag, _ := ParseTag("v0.0.1")
 	tag.Mode = ModeLegacy
 	seq := [][]string{
 		{"patch"},
@@ -218,7 +218,7 @@ func TestIncrementSequence(t *testing.T) {
 
 func TestIncrementBackwardsProtection(t *testing.T) {
 	t.Run("env counters", func(t *testing.T) {
-		original := ParseTag("v1.0.0-test3")
+		original, _ := ParseTag("v1.0.0-test3")
 		original.Mode = ModeLegacy
 		backwards := CommandsToFlags([]string{"test2"}, "default")
 		if err := original.Increment(backwards, false, false); err == nil {
@@ -228,7 +228,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 			t.Fatalf("tag mutated on error got %s", got)
 		}
 
-		allow := ParseTag("v1.0.0-test3")
+		allow, _ := ParseTag("v1.0.0-test3")
 		allow.Mode = ModeLegacy
 		if err := allow.Increment(backwards, true, false); err != nil {
 			t.Fatalf("allow backwards returned error: %v", err)
@@ -237,7 +237,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 			t.Fatalf("allow backwards produced %s", got)
 		}
 
-		skip := ParseTag("v1.0.0-test3")
+		skip, _ := ParseTag("v1.0.0-test3")
 		skip.Mode = ModeLegacy
 		if err := skip.Increment(backwards, false, true); err != nil {
 			t.Fatalf("skip forwards returned error: %v", err)
@@ -246,7 +246,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 			t.Fatalf("skip forwards produced %s", got)
 		}
 
-		withRelease := ParseTag("v1.0.0-test3.1")
+		withRelease, _ := ParseTag("v1.0.0-test3.1")
 		withRelease.Mode = ModeLegacy
 		if err := withRelease.Increment(backwards, false, true); err != nil {
 			t.Fatalf("skip forwards with release returned error: %v", err)
@@ -257,13 +257,13 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 	})
 
 	t.Run("stages", func(t *testing.T) {
-		stage := ParseTag("v1.0.0-rc3")
+		stage, _ := ParseTag("v1.0.0-rc3")
 		stage.Mode = ModeLegacy
 		stageFlags := CommandsToFlags([]string{"rc2"}, "default")
 		if err := stage.Increment(stageFlags, false, false); err == nil {
 			t.Fatalf("expected error when decrementing stage without flags")
 		}
-		allowStage := ParseTag("v1.0.0-rc3")
+		allowStage, _ := ParseTag("v1.0.0-rc3")
 		allowStage.Mode = ModeLegacy
 		if err := allowStage.Increment(stageFlags, true, false); err != nil {
 			t.Fatalf("allow backwards stage returned error: %v", err)
@@ -271,7 +271,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		if got := allowStage.String(); got != "v1.0.0-rc2" {
 			t.Fatalf("allow backwards stage produced %s", got)
 		}
-		skipStage := ParseTag("v1.0.0-rc3")
+		skipStage, _ := ParseTag("v1.0.0-rc3")
 		skipStage.Mode = ModeLegacy
 		if err := skipStage.Increment(stageFlags, false, true); err != nil {
 			t.Fatalf("skip forwards stage returned error: %v", err)
@@ -283,7 +283,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 
 	t.Run("core version numbers", func(t *testing.T) {
 		patchFlags := CommandsToFlags([]string{"patch3"}, "default")
-		patch := ParseTag("v2.3.4")
+		patch, _ := ParseTag("v2.3.4")
 		patch.Mode = ModeLegacy
 		if err := patch.Increment(patchFlags, false, false); err == nil {
 			t.Fatalf("expected patch decrement error")
@@ -296,7 +296,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		minorFlags := CommandsToFlags([]string{"minor1"}, "default")
-		minor := ParseTag("v2.3.4")
+		minor, _ := ParseTag("v2.3.4")
 		minor.Mode = ModeLegacy
 		if err := minor.Increment(minorFlags, false, false); err == nil {
 			t.Fatalf("expected minor decrement error")
@@ -309,7 +309,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		majorFlags := CommandsToFlags([]string{"major1"}, "default")
-		major := ParseTag("v3.0.0")
+		major, _ := ParseTag("v3.0.0")
 		major.Mode = ModeLegacy
 		if err := major.Increment(majorFlags, false, false); err == nil {
 			t.Fatalf("expected major decrement error")
@@ -322,7 +322,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		releaseFlags := CommandsToFlags([]string{"release2"}, "default")
-		release := ParseTag("v1.2.3-test3.5")
+		release, _ := ParseTag("v1.2.3-test3.5")
 		release.Mode = ModeLegacy
 		if err := release.Increment(releaseFlags, false, false); err == nil {
 			t.Fatalf("expected release decrement error")
@@ -334,7 +334,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 			t.Fatalf("allow release decrement produced %s", got)
 		}
 
-		skipRelease := ParseTag("v1.2.3-test3.5")
+		skipRelease, _ := ParseTag("v1.2.3-test3.5")
 		skipRelease.Mode = ModeLegacy
 		if err := skipRelease.Increment(releaseFlags, false, true); err != nil {
 			t.Fatalf("skip release decrement returned error: %v", err)
@@ -343,7 +343,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 			t.Fatalf("skip release decrement produced %s", got)
 		}
 
-		skipPatch := ParseTag("v2.3.4")
+		skipPatch, _ := ParseTag("v2.3.4")
 		skipPatch.Mode = ModeLegacy
 		if err := skipPatch.Increment(patchFlags, false, true); err == nil {
 			t.Fatalf("skip forwards should not allow patch decrement when patch provided")
