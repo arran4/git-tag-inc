@@ -58,6 +58,11 @@ func parseConfig(data []byte, cfg *Config) error {
 			}
 		}
 	}
+		ConfiguredModesMap = make(map[string]string)
+	for k, v := range cfg.Modes {
+		ConfiguredModesMap[k] = v
+	}
+
 	return nil
 }
 
@@ -70,6 +75,7 @@ var DefaultConfig = Config{
 
 var ConfiguredEnvsMap map[string]int
 var ConfiguredStagesMap map[string]int
+var ConfiguredModesMap map[string]string
 
 func init() {
 	LoadConfig()
@@ -187,6 +193,11 @@ func LoadConfigEx(configUrl string, requireConfig bool) error {
 	ConfiguredStagesMap = make(map[string]int)
 	for i, stage := range cfg.Stages {
 		ConfiguredStagesMap[stage] = i
+	}
+
+		ConfiguredModesMap = make(map[string]string)
+	for k, v := range cfg.Modes {
+		ConfiguredModesMap[k] = v
 	}
 
 	return nil
