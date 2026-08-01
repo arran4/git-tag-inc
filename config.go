@@ -7,7 +7,6 @@
 package gittaginc
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,8 +16,38 @@ import (
 )
 
 type Config struct {
-	Envs   []string `json:"Envs"`
-	Stages []string `json:"Stages"`
+	Envs   []string
+	Stages []string
+}
+
+func parseConfig(data []byte, cfg *Config) error {
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			val := strings.TrimSpace(parts[1])
+			items := strings.Split(val, ",")
+			var parsedItems []string
+			for _, item := range items {
+				item = strings.TrimSpace(item)
+				if item != "" {
+					parsedItems = append(parsedItems, item)
+				}
+			}
+
+			if strings.EqualFold(key, "Envs") {
+				cfg.Envs = parsedItems
+			} else if strings.EqualFold(key, "Stages") {
+				cfg.Stages = parsedItems
+			}
+		}
+	}
+	return nil
 }
 
 var DefaultConfig = Config{
@@ -49,7 +78,7 @@ func LoadConfigEx(configUrl string, requireConfig bool) error {
 				data, err := io.ReadAll(resp.Body)
 				if err == nil {
 					var parsedConfig Config
-					if err := json.Unmarshal(data, &parsedConfig); err == nil {
+					if err := parseConfig(data, &parsedConfig); err == nil {
 						if len(parsedConfig.Envs) > 0 {
 							cfg.Envs = parsedConfig.Envs
 						}
@@ -72,7 +101,7 @@ func LoadConfigEx(configUrl string, requireConfig bool) error {
 				}
 			} else {
 				var parsedConfig Config
-				if err := json.Unmarshal(data, &parsedConfig); err == nil {
+				if err := parseConfig(data, &parsedConfig); err == nil {
 					if len(parsedConfig.Envs) > 0 {
 						cfg.Envs = parsedConfig.Envs
 					}
@@ -91,12 +120,12 @@ func LoadConfigEx(configUrl string, requireConfig bool) error {
 		dir, err := os.Getwd()
 		if err == nil {
 			for {
-				for _, filename := range []string{".git-tag-inc.json", ".gittaginc.json"} {
+				for _, filename := range []string{".git-tag-inc.conf", ".gittaginc.conf"} {
 					path := filepath.Join(dir, filename)
 					data, err := os.ReadFile(path)
 					if err == nil {
 						var parsedConfig Config
-						if err := json.Unmarshal(data, &parsedConfig); err == nil {
+						if err := parseConfig(data, &parsedConfig); err == nil {
 							if len(parsedConfig.Envs) > 0 {
 								cfg.Envs = parsedConfig.Envs
 							}
