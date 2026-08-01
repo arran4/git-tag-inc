@@ -1,0 +1,41 @@
+-- test1_basic.conf --
+Envs=staging,prod
+Stages=alpha,beta
+-- test1_basic.json --
+{
+  "Envs": ["staging", "prod"],
+  "Stages": ["alpha", "beta"]
+}
+
+-- test2_spaces.conf --
+   Envs  =   dev , test  , staging
+ Stages =   rc ,  release
+-- test2_spaces.json --
+{
+  "Envs": ["dev", "test", "staging"],
+  "Stages": ["rc", "release"]
+}
+
+-- test3_comments.conf --
+# This is a comment
+Envs=test1,test2 # inline comments are not supported by the current simple parser, wait let's check
+# Stages=alpha
+Stages=beta
+-- test3_comments.json --
+{
+  "Envs": ["test1", "test2 # inline comments are not supported by the current simple parser", "wait let's check"],
+  "Stages": ["beta"]
+}
+
+-- test4_empty_lines.conf --
+
+
+Envs=test
+
+Stages=alpha
+
+-- test4_empty_lines.json --
+{
+  "Envs": ["test"],
+  "Stages": ["alpha"]
+}
