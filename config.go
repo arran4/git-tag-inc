@@ -9,6 +9,7 @@ package gittaginc
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 )
 
 type Config struct {
@@ -31,19 +32,43 @@ func init() {
 func LoadConfig() {
 	cfg := DefaultConfig
 
-	for _, filename := range []string{".git-tag-inc.json", ".gittaginc.json"} {
-		data, err := os.ReadFile(filename)
-		if err == nil {
-			var parsedConfig Config
-			if err := json.Unmarshal(data, &parsedConfig); err == nil {
-				if len(parsedConfig.Envs) > 0 {
-					cfg.Envs = parsedConfig.Envs
-				}
-				if len(parsedConfig.Stages) > 0 {
-					cfg.Stages = parsedConfig.Stages
+	dir, err := os.Getwd()
+	if err == nil {
+		for {
+			found := false
+			for _, filename := range []string{".git-tag-inc.json", ".gittaginc.json"} {
+				path := filepath.Join(dir, filename)
+				data, err := os.ReadFile(path)
+				if err == nil {
+					var parsedConfig Config
+					if err := json.Unmarshal(data, &parsedConfig); err == nil {
+						if len(parsedConfig.Envs) > 0 {
+							cfg.Envs = parsedConfig.Envs
+						}
+						if len(parsedConfig.Stages) > 0 {
+							cfg.Stages = parsedConfig.Stages
+						}
+					}
+					found = true
+					break
 				}
 			}
-			break
+
+			if found {
+				break
+			}
+
+			// Stop traversing if we hit the repository root
+			if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+				break
+			}
+
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				// Reached root of the file system
+				break
+			}
+			dir = parent
 		}
 	}
 

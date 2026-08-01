@@ -42,13 +42,13 @@ func TestParseTag(t *testing.T) {
 		{"v1.2.3-1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 
 		// Invalid formats (should return nil)
-		{"1.0.0", nil},                    // Missing 'v' prefix
-		{"v1.0", nil},                     // Missing patch version
-		{"v1.0.a", nil},                   // Invalid patch version
-		{"v1.0.0-beta", nil},              // Missing number in stage
-		{"v1.0.0-beta1-prod2", nil},       // Invalid env name
+		{"1.0.0", nil},                      // Missing 'v' prefix
+		{"v1.0", nil},                       // Missing patch version
+		{"v1.0.a", nil},                     // Invalid patch version
+		{"v1.0.0-beta", nil},                // Missing number in stage
+		{"v1.0.0-beta1-prod2", nil},         // Invalid env name
 		{"v1.0.0-beta1-test2-release", nil}, // Missing number in release
-		{"v1.0.0-1-test2", &Tag{Major: 1, Minor: 0, Patch: 0, Release: ptr(1), EnvName: "test", Env: ptr(2), Pad: 1, Mode: ModeLegacy}},           // Number without env
+		{"v1.0.0-1-test2", &Tag{Major: 1, Minor: 0, Patch: 0, Release: ptr(1), EnvName: "test", Env: ptr(2), Pad: 1, Mode: ModeLegacy}}, // Number without env
 		{"v1.0.0.", nil},
 
 		// Unseparated extensions (these fall into valid modes if they start with a valid prefix, e.g. beta, otherwise fail)
@@ -89,7 +89,7 @@ func TestParseTag(t *testing.T) {
 
 func TestString(t *testing.T) {
 	cases := []struct {
-		tag  *Tag
+		tag        *Tag
 		wantLegacy string
 		wantSemver string
 	}{

@@ -25,8 +25,8 @@ type Tag struct {
 	StagePad  int
 
 	EnvName string
-	Env *int
-	Pad  int
+	Env     *int
+	Pad     int
 
 	Patch   int
 	Release *int
@@ -126,8 +126,12 @@ func (t *Tag) LessThan(other *Tag) bool {
 		tRank, tOk := ConfiguredEnvsMap[t.EnvName]
 		oRank, oOk := ConfiguredEnvsMap[other.EnvName]
 
-		if !tOk { tRank = len(ConfiguredEnvsMap) }
-		if !oOk { oRank = len(ConfiguredEnvsMap) }
+		if !tOk {
+			tRank = len(ConfiguredEnvsMap)
+		}
+		if !oOk {
+			oRank = len(ConfiguredEnvsMap)
+		}
 
 		if tRank != oRank {
 			// Higher rank number means lower priority (from 0 to n)
@@ -186,8 +190,6 @@ func (t *Tag) String() string {
 	}
 	return fmt.Sprintf("v%d.%d.%d%s", t.Major, t.Minor, t.Patch, ext)
 }
-
-
 
 func ParseTag(tag string) (*Tag, error) {
 	if !strings.HasPrefix(tag, "v") {
@@ -328,7 +330,7 @@ func ParseTag(tag string) (*Tag, error) {
 		return compName, padLen, ptr(val), sub[digitEndIdx:], nil
 	}
 
-// Parse arbitrary suffix components
+	// Parse arbitrary suffix components
 	for len(s) > 0 {
 		compName, padLen, valPtr, nextS, err := extractComponent(s)
 		if err != nil {
