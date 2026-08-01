@@ -7,6 +7,7 @@
 package gittaginc
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,9 +16,13 @@ import (
 	"strings"
 )
 
+//go:embed .git-tag-inc.conf
+var embeddedDefaultConfig []byte
+
 type Config struct {
 	Envs   []string
 	Stages []string
+	Modes  map[string]string
 }
 
 func parseConfig(data []byte, cfg *Config) error {
@@ -44,6 +49,12 @@ func parseConfig(data []byte, cfg *Config) error {
 				cfg.Envs = parsedItems
 			} else if strings.EqualFold(key, "Stages") {
 				cfg.Stages = parsedItems
+			} else if strings.HasPrefix(strings.ToLower(key), "mode.") {
+				modeName := strings.TrimPrefix(strings.ToLower(key), "mode.")
+				if cfg.Modes == nil {
+					cfg.Modes = make(map[string]string)
+				}
+				cfg.Modes[modeName] = val
 			}
 		}
 	}
@@ -51,6 +62,8 @@ func parseConfig(data []byte, cfg *Config) error {
 }
 
 var DefaultConfig = Config{
+	Modes: make(map[string]string),
+
 	Envs:   []string{"test", "uat"},
 	Stages: []string{"alpha", "beta", "rc", "next"},
 }
@@ -63,7 +76,12 @@ func init() {
 }
 
 func LoadConfigEx(configUrl string, requireConfig bool) error {
-	cfg := DefaultConfig
+	// Use the embedded config as the true baseline
+	cfg := Config{}
+	if err := parseConfig(embeddedDefaultConfig, &cfg); err != nil {
+		// Panic because this means our internal embedded file is broken
+		panic("embedded default config failed to parse: " + err.Error())
+	}
 
 	found := false
 	if configUrl != "" {
