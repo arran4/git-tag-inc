@@ -28,49 +28,49 @@ func TestParseTag(t *testing.T) {
 		{"v1.0.0-alpha01uat01", nil},
 		{"v1.0.0-beta01-foo01", nil},
 		{"v1.0.0-unknown1", nil},
-		{"v1.2.3", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3}},
-		{"v1.2.3-test45", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, EnvName: "test", Env: new(45), Pad: 2}},
-		{"v1.2.3-uat0045", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, EnvName: "uat", Env: new(45), Pad: 4}},
-		{"v1.2.3-alpha1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: new(1), StagePad: 0}},
-		{"v1.2.3-beta02-test03", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
-		{"v1.0.0-rc01-test02", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, EnvName: "test", Env: new(2), Pad: 2}},
-		{"v1.0.0-next02-test01", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(1), Pad: 2}},
-		{"v1.0.0-beta007-uat012", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, EnvName: "uat", Env: new(12), Pad: 3}},
-		{"v1.0.0-beta1-test2.3", &Tag{Mode: ModeSemver, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, EnvName: "test", Env: new(2), Pad: 0, Release: new(3)}},
-		{"v1.2.3-beta.02.test.03", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
-		{"v1.2.3.1", &Tag{Mode: ModeSemver, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
-		{"v1.2.3-1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
+		{"v1.2.3", &Tag{Mode: "legacy", Major: 1, Minor: 2, Patch: 3}},
+		{"v1.2.3-test45", &Tag{Mode: "legacy", Major: 1, Minor: 2, Patch: 3, EnvName: "test", Env: new(45), Pad: 2}},
+		{"v1.2.3-uat0045", &Tag{Mode: "legacy", Major: 1, Minor: 2, Patch: 3, EnvName: "uat", Env: new(45), Pad: 4}},
+		{"v1.2.3-alpha1", &Tag{Mode: "legacy", Major: 1, Minor: 2, Patch: 3, StageName: "alpha", Stage: new(1), StagePad: 0}},
+		{"v1.2.3-beta02-test03", &Tag{Mode: "legacy", Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
+		{"v1.0.0-rc01-test02", &Tag{Mode: "legacy", Major: 1, Minor: 0, Patch: 0, StageName: "rc", Stage: new(1), StagePad: 2, EnvName: "test", Env: new(2), Pad: 2}},
+		{"v1.0.0-next02-test01", &Tag{Mode: "legacy", Major: 1, Minor: 0, Patch: 0, StageName: "next", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(1), Pad: 2}},
+		{"v1.0.0-beta007-uat012", &Tag{Mode: "legacy", Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(7), StagePad: 3, EnvName: "uat", Env: new(12), Pad: 3}},
+		{"v1.0.0-beta1-test2.3", &Tag{Mode: "semver", Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 0, EnvName: "test", Env: new(2), Pad: 0, Release: new(3)}},
+		{"v1.2.3-beta.02.test.03", &Tag{Mode: "semver", Major: 1, Minor: 2, Patch: 3, StageName: "beta", Stage: new(2), StagePad: 2, EnvName: "test", Env: new(3), Pad: 2}},
+		{"v1.2.3.1", &Tag{Mode: "semver", Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
+		{"v1.2.3-1", &Tag{Mode: "legacy", Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 
 		// Invalid formats (should return nil)
 		{"1.0.0", nil},       // Missing 'v' prefix
 		{"v1.0", nil},        // Missing patch version
 		{"v1.0.a", nil},      // Invalid patch version
 		{"v1.0.0-beta", nil}, // Missing number in stage
-		{"v1.0.0-beta1-prod2", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 1, EnvName: "prod", Env: new(2), Pad: 1}},
+		{"v1.0.0-beta1-prod2", &Tag{Mode: "legacy", Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 1, EnvName: "prod", Env: new(2), Pad: 1}},
 		{"v1.0.0-beta1-test2-release", nil}, // Missing number in release
-		{"v1.0.0-1-test2", &Tag{Major: 1, Minor: 0, Patch: 0, Release: ptr(1), EnvName: "test", Env: ptr(2), Pad: 1, Mode: ModeLegacy}}, // Number without env
+		{"v1.0.0-1-test2", &Tag{Major: 1, Minor: 0, Patch: 0, Release: ptr(1), EnvName: "test", Env: ptr(2), Pad: 1, Mode: "legacy"}}, // Number without env
 		{"v1.0.0.", nil},
 
 		// Unseparated extensions (these fall into valid modes if they start with a valid prefix, e.g. beta, otherwise fail)
-		{"v1.0.0-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, Pad: 1, EnvName: "test", Env: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
-		{"v1.0.0-beta1-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Release: ptr(1), Mode: ModeLegacy}},
-		{"v1.0.0-beta1-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Pad: 1, EnvName: "test", Env: ptr(2), Release: ptr(1), Mode: ModeLegacy}},
+		{"v1.0.0-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, Pad: 1, EnvName: "test", Env: ptr(2), Release: ptr(1), Mode: "legacy"}},
+		{"v1.0.0-beta1-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Release: ptr(1), Mode: "legacy"}},
+		{"v1.0.0-beta1-test2-1", &Tag{Major: 1, Minor: 0, Patch: 0, StageName: "beta", StagePad: 1, Stage: ptr(1), Pad: 1, EnvName: "test", Env: ptr(2), Release: ptr(1), Mode: "legacy"}},
 
 		// Edge cases with 0 padding
-		{"v1.0.0-rc0-test0", &Tag{Major: 1, StageName: "rc", StagePad: 1, Stage: ptr(0), Pad: 1, EnvName: "test", Env: ptr(0), Mode: ModeLegacy}},
-		{"v1.0.0-rc00-test00", &Tag{Major: 1, StageName: "rc", StagePad: 2, Stage: ptr(0), Pad: 2, EnvName: "test", Env: ptr(0), Mode: ModeLegacy}},
+		{"v1.0.0-rc0-test0", &Tag{Major: 1, StageName: "rc", StagePad: 1, Stage: ptr(0), Pad: 1, EnvName: "test", Env: ptr(0), Mode: "legacy"}},
+		{"v1.0.0-rc00-test00", &Tag{Major: 1, StageName: "rc", StagePad: 2, Stage: ptr(0), Pad: 2, EnvName: "test", Env: ptr(0), Mode: "legacy"}},
 
 		// Leading zero testing (len of capture group emulation)
-		{"v1.0.0-alpha005", &Tag{Major: 1, StageName: "alpha", StagePad: 3, Stage: ptr(5), Mode: ModeLegacy}},
-		{"v1.0.0-alpha0", &Tag{Major: 1, StageName: "alpha", StagePad: 1, Stage: ptr(0), Mode: ModeLegacy}},
-		{"v1.0.0-alpha00", &Tag{Major: 1, StageName: "alpha", StagePad: 2, Stage: ptr(0), Mode: ModeLegacy}},
-		{"v1.0.0-alpha10", &Tag{Major: 1, StageName: "alpha", StagePad: 2, Stage: ptr(10), Mode: ModeLegacy}},
+		{"v1.0.0-alpha005", &Tag{Major: 1, StageName: "alpha", StagePad: 3, Stage: ptr(5), Mode: "legacy"}},
+		{"v1.0.0-alpha0", &Tag{Major: 1, StageName: "alpha", StagePad: 1, Stage: ptr(0), Mode: "legacy"}},
+		{"v1.0.0-alpha00", &Tag{Major: 1, StageName: "alpha", StagePad: 2, Stage: ptr(0), Mode: "legacy"}},
+		{"v1.0.0-alpha10", &Tag{Major: 1, StageName: "alpha", StagePad: 2, Stage: ptr(10), Mode: "legacy"}},
 
 		// Additional Edge Cases
-		{"v0.0.0", &Tag{Major: 0, Minor: 0, Patch: 0, Mode: ModeLegacy}},
-		{"v10.20.30", &Tag{Major: 10, Minor: 20, Patch: 30, Mode: ModeLegacy}},
-		{"v1.0.0-test0", &Tag{Major: 1, Pad: 1, EnvName: "test", Env: ptr(0), Mode: ModeLegacy}},
-		{"v1.0.0-uat00", &Tag{Major: 1, Pad: 2, EnvName: "uat", Env: ptr(0), Mode: ModeLegacy}},
+		{"v0.0.0", &Tag{Major: 0, Minor: 0, Patch: 0, Mode: "legacy"}},
+		{"v10.20.30", &Tag{Major: 10, Minor: 20, Patch: 30, Mode: "legacy"}},
+		{"v1.0.0-test0", &Tag{Major: 1, Pad: 1, EnvName: "test", Env: ptr(0), Mode: "legacy"}},
+		{"v1.0.0-uat00", &Tag{Major: 1, Pad: 2, EnvName: "uat", Env: ptr(0), Mode: "legacy"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.tag, func(t *testing.T) {
@@ -102,11 +102,11 @@ func TestString(t *testing.T) {
 		{&Tag{Major: 1, Minor: 0, Patch: 1, StageName: "alpha", Stage: new(1), StagePad: 2, EnvName: "test", Env: new(1), Pad: 2, Release: new(2)}, "v1.0.1-alpha01-test01.2", "v1.0.1-alpha.01.test.01.2"},
 	}
 	for _, tt := range cases {
-		tt.tag.Mode = ModeLegacy
+		tt.tag.Mode = "legacy"
 		if got := tt.tag.String(); got != tt.wantLegacy {
 			t.Errorf("%v (legacy) got %s want %s", tt.tag, got, tt.wantLegacy)
 		}
-		tt.tag.Mode = ModeSemver
+		tt.tag.Mode = "semver"
 		if got := tt.tag.String(); got != tt.wantSemver {
 			t.Errorf("%v (semver) got %s want %s", tt.tag, got, tt.wantSemver)
 		}
@@ -150,7 +150,7 @@ func TestIncrement(t *testing.T) {
 	}
 	for _, tt := range tests {
 		tag, _ := ParseTag(tt.start)
-		tag.Mode = ModeLegacy
+		tag.Mode = "legacy"
 		flags := CommandsToFlags(tt.cmds, "default")
 		if err := tag.Increment(flags, false, false); err != nil {
 			t.Fatalf("unexpected error incrementing %s with %v: %v", tt.start, tt.cmds, err)
@@ -190,7 +190,7 @@ func TestLessThan(t *testing.T) {
 
 func TestIncrementSequence(t *testing.T) {
 	tag, _ := ParseTag("v0.0.1")
-	tag.Mode = ModeLegacy
+	tag.Mode = "legacy"
 	seq := [][]string{
 		{"patch"},
 		{"release"},
@@ -219,7 +219,7 @@ func TestIncrementSequence(t *testing.T) {
 func TestIncrementBackwardsProtection(t *testing.T) {
 	t.Run("env counters", func(t *testing.T) {
 		original, _ := ParseTag("v1.0.0-test3")
-		original.Mode = ModeLegacy
+		original.Mode = "legacy"
 		backwards := CommandsToFlags([]string{"test2"}, "default")
 		if err := original.Increment(backwards, false, false); err == nil {
 			t.Fatalf("expected error when decrementing without flags")
@@ -229,7 +229,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		allow, _ := ParseTag("v1.0.0-test3")
-		allow.Mode = ModeLegacy
+		allow.Mode = "legacy"
 		if err := allow.Increment(backwards, true, false); err != nil {
 			t.Fatalf("allow backwards returned error: %v", err)
 		}
@@ -238,7 +238,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		skip, _ := ParseTag("v1.0.0-test3")
-		skip.Mode = ModeLegacy
+		skip.Mode = "legacy"
 		if err := skip.Increment(backwards, false, true); err != nil {
 			t.Fatalf("skip forwards returned error: %v", err)
 		}
@@ -247,7 +247,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		withRelease, _ := ParseTag("v1.0.0-test3.1")
-		withRelease.Mode = ModeLegacy
+		withRelease.Mode = "legacy"
 		if err := withRelease.Increment(backwards, false, true); err != nil {
 			t.Fatalf("skip forwards with release returned error: %v", err)
 		}
@@ -258,13 +258,13 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 
 	t.Run("stages", func(t *testing.T) {
 		stage, _ := ParseTag("v1.0.0-rc3")
-		stage.Mode = ModeLegacy
+		stage.Mode = "legacy"
 		stageFlags := CommandsToFlags([]string{"rc2"}, "default")
 		if err := stage.Increment(stageFlags, false, false); err == nil {
 			t.Fatalf("expected error when decrementing stage without flags")
 		}
 		allowStage, _ := ParseTag("v1.0.0-rc3")
-		allowStage.Mode = ModeLegacy
+		allowStage.Mode = "legacy"
 		if err := allowStage.Increment(stageFlags, true, false); err != nil {
 			t.Fatalf("allow backwards stage returned error: %v", err)
 		}
@@ -272,7 +272,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 			t.Fatalf("allow backwards stage produced %s", got)
 		}
 		skipStage, _ := ParseTag("v1.0.0-rc3")
-		skipStage.Mode = ModeLegacy
+		skipStage.Mode = "legacy"
 		if err := skipStage.Increment(stageFlags, false, true); err != nil {
 			t.Fatalf("skip forwards stage returned error: %v", err)
 		}
@@ -284,7 +284,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 	t.Run("core version numbers", func(t *testing.T) {
 		patchFlags := CommandsToFlags([]string{"patch3"}, "default")
 		patch, _ := ParseTag("v2.3.4")
-		patch.Mode = ModeLegacy
+		patch.Mode = "legacy"
 		if err := patch.Increment(patchFlags, false, false); err == nil {
 			t.Fatalf("expected patch decrement error")
 		}
@@ -297,7 +297,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 
 		minorFlags := CommandsToFlags([]string{"minor1"}, "default")
 		minor, _ := ParseTag("v2.3.4")
-		minor.Mode = ModeLegacy
+		minor.Mode = "legacy"
 		if err := minor.Increment(minorFlags, false, false); err == nil {
 			t.Fatalf("expected minor decrement error")
 		}
@@ -310,7 +310,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 
 		majorFlags := CommandsToFlags([]string{"major1"}, "default")
 		major, _ := ParseTag("v3.0.0")
-		major.Mode = ModeLegacy
+		major.Mode = "legacy"
 		if err := major.Increment(majorFlags, false, false); err == nil {
 			t.Fatalf("expected major decrement error")
 		}
@@ -323,7 +323,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 
 		releaseFlags := CommandsToFlags([]string{"release2"}, "default")
 		release, _ := ParseTag("v1.2.3-test3.5")
-		release.Mode = ModeLegacy
+		release.Mode = "legacy"
 		if err := release.Increment(releaseFlags, false, false); err == nil {
 			t.Fatalf("expected release decrement error")
 		}
@@ -335,7 +335,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		skipRelease, _ := ParseTag("v1.2.3-test3.5")
-		skipRelease.Mode = ModeLegacy
+		skipRelease.Mode = "legacy"
 		if err := skipRelease.Increment(releaseFlags, false, true); err != nil {
 			t.Fatalf("skip release decrement returned error: %v", err)
 		}
@@ -344,7 +344,7 @@ func TestIncrementBackwardsProtection(t *testing.T) {
 		}
 
 		skipPatch, _ := ParseTag("v2.3.4")
-		skipPatch.Mode = ModeLegacy
+		skipPatch.Mode = "legacy"
 		if err := skipPatch.Increment(patchFlags, false, true); err == nil {
 			t.Fatalf("skip forwards should not allow patch decrement when patch provided")
 		}
@@ -384,7 +384,7 @@ func TestCommandsToFlags(t *testing.T) {
 	if numbers.ReleaseValue == nil || *numbers.ReleaseValue != 7 {
 		t.Fatalf("expected release numeric parsing %#v", numbers)
 	}
-	arr := CommandsToFlags([]string{"release", "uat"}, ModeArraneous)
+	arr := CommandsToFlags([]string{"release", "uat"}, "arraneous")
 	if !arr.Patch || arr.Env != "uat" || !arr.Valid {
 		t.Fatalf("arraneous parsing failed %#v", arr)
 	}
@@ -400,7 +400,7 @@ func TestCommandsToFlags(t *testing.T) {
 	if !relOnly.Release || !relOnly.Valid {
 		t.Fatalf("release only failed %#v", relOnly)
 	}
-	wrong2 := CommandsToFlags([]string{"patch"}, ModeArraneous)
+	wrong2 := CommandsToFlags([]string{"patch"}, "arraneous")
 	if wrong2.Valid {
 		t.Fatalf("expected invalid patch in arraneous")
 	}

@@ -11,9 +11,6 @@ import (
 	"strings"
 )
 
-const ModeArraneous = "arraneous"
-const ModeSemver = "semver"
-const ModeLegacy = "legacy"
 
 type CmdFlags struct {
 	Major        bool
@@ -76,7 +73,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.MinorValue = value
 			}
 		} else if name == "patch" {
-			if mode == ModeArraneous {
+			if mode == "arraneous" {
 				c.Valid = false
 				return c
 			}
@@ -85,7 +82,7 @@ func CommandsToFlags(args []string, mode string) CmdFlags {
 				c.PatchValue = value
 			}
 		} else if name == "release" {
-			if mode == ModeArraneous {
+			if mode == "arraneous" {
 				c.Patch = true
 				if value != nil {
 					c.PatchValue = value

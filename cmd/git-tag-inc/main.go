@@ -38,7 +38,7 @@ var (
 	force            = flag.Bool("force", false, "Force the operation (implies --allow-backwards, --repeating, --ignore)")
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
-	mode          = flag.String("mode", "auto", "Naming mode: auto, semver, legacy, or arraneous")
+	mode          = flag.String("mode", "auto", "Naming mode: auto, semver, legacy, arraneous. Custom modes supported in config.")
 	baseVersion   = flag.String("base-version", "", "String mode: explicit base version to increment. If '-' is provided, reads from stdin. Operates entirely offline and bypasses git repository checks.")
 	configUrl     = flag.String("config", "", "URL or local path to override the configuration file")
 	requireConfig = flag.Bool("require-config", false, "Fail if the config file cannot be found (either from --config or standard locations)")
@@ -311,7 +311,7 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 	}
 	var startMode string
 	if *mode == "auto" {
-		startMode = gittaginc.ModeSemver
+		startMode = "semver"
 	} else {
 		startMode = *mode
 	}
@@ -375,7 +375,7 @@ func Usage() {
 	}{
 		ProgramName:     os.Args[0],
 		Flags:           buf.String(),
-		IsArraneousMode: *mode == gittaginc.ModeArraneous,
+		IsArraneousMode: *mode == "arraneous",
 	}
 
 	if err := t.Execute(out, data); err != nil {

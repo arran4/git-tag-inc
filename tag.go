@@ -158,7 +158,7 @@ func (t *Tag) LessThan(other *Tag) bool {
 
 func (t *Tag) String() string {
 	ext := ""
-	if t.Mode == ModeLegacy || t.Mode == ModeArraneous {
+	if t.Mode == "legacy" || t.Mode == "arraneous" {
 		if t.Stage != nil {
 			ext += fmt.Sprintf("-%s%0*d", t.StageName, t.StagePad, *t.Stage)
 		}
@@ -246,14 +246,14 @@ func ParseTag(tag string) (*Tag, error) {
 
 	// If nothing remains, it's just vX.Y.Z
 	if len(s) == 0 {
-		t.Mode = ModeLegacy // Default to legacy, although mode only really matters for extensions
+		t.Mode = "legacy" // Default to legacy, although mode only really matters for extensions
 		return t, nil
 	}
 
 	if strings.Contains(s, ".") {
-		t.Mode = ModeSemver
+		t.Mode = "semver"
 	} else {
-		t.Mode = ModeLegacy
+		t.Mode = "legacy"
 	}
 
 	// Helper function to extract a component and its digits
