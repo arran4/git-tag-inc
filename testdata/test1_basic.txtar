@@ -1,0 +1,8 @@
+-- input.conf --
+Envs=staging,prod
+Stages=alpha,beta
+-- expected.json --
+{
+  "Envs": ["staging", "prod"],
+  "Stages": ["alpha", "beta"]
+}

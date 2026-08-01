@@ -1,0 +1,8 @@
+-- input.conf --
+   Envs  =   dev , test  , staging
+ Stages =   rc ,  release
+-- expected.json --
+{
+  "Envs": ["dev", "test", "staging"],
+  "Stages": ["rc", "release"]
+}

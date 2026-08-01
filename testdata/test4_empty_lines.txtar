@@ -1,0 +1,12 @@
+-- input.conf --
+
+
+Envs=test
+
+Stages=alpha
+
+-- expected.json --
+{
+  "Envs": ["test"],
+  "Stages": ["alpha"]
+}

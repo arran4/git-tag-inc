@@ -42,10 +42,10 @@ func TestParseTag(t *testing.T) {
 		{"v1.2.3-1", &Tag{Mode: ModeLegacy, Major: 1, Minor: 2, Patch: 3, Release: new(1)}},
 
 		// Invalid formats (should return nil)
-		{"1.0.0", nil},                      // Missing 'v' prefix
-		{"v1.0", nil},                       // Missing patch version
-		{"v1.0.a", nil},                     // Invalid patch version
-		{"v1.0.0-beta", nil},                // Missing number in stage
+		{"1.0.0", nil},       // Missing 'v' prefix
+		{"v1.0", nil},        // Missing patch version
+		{"v1.0.a", nil},      // Invalid patch version
+		{"v1.0.0-beta", nil}, // Missing number in stage
 		{"v1.0.0-beta1-prod2", &Tag{Mode: ModeLegacy, Major: 1, Minor: 0, Patch: 0, StageName: "beta", Stage: new(1), StagePad: 1, EnvName: "prod", Env: new(2), Pad: 1}},
 		{"v1.0.0-beta1-test2-release", nil}, // Missing number in release
 		{"v1.0.0-1-test2", &Tag{Major: 1, Minor: 0, Patch: 0, Release: ptr(1), EnvName: "test", Env: ptr(2), Pad: 1, Mode: ModeLegacy}}, // Number without env
