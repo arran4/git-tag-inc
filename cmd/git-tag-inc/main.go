@@ -38,8 +38,10 @@ var (
 	force            = flag.Bool("force", false, "Force the operation (implies --allow-backwards, --repeating, --ignore)")
 	// TODO: consider supporting other naming modes such as "xyzzy",
 	// "hybrid" or "octarine" which some teams use internally.
-	mode        = flag.String("mode", "auto", "Naming mode: auto, semver, legacy, or arraneous")
-	baseVersion = flag.String("base-version", "", "String mode: explicit base version to increment. If '-' is provided, reads from stdin. Operates entirely offline and bypasses git repository checks.")
+	mode          = flag.String("mode", "auto", "Naming mode: auto, semver, legacy, or arraneous")
+	baseVersion   = flag.String("base-version", "", "String mode: explicit base version to increment. If '-' is provided, reads from stdin. Operates entirely offline and bypasses git repository checks.")
+	configUrl     = flag.String("config", "", "URL or local path to override the configuration file")
+	requireConfig = flag.Bool("require-config", false, "Fail if the config file cannot be found (either from --config or standard locations)")
 
 	out io.Writer = os.Stderr
 )
@@ -100,6 +102,14 @@ func main() {
 	if *verbose {
 		fmt.Fprintf(out, "Version: %s (%s) by %s commit %s\n", version, date, builtBy, commit)
 	}
+	if *configUrl != "" || *requireConfig {
+		err := gittaginc.LoadConfigEx(*configUrl, *requireConfig)
+		if err != nil {
+			fmt.Fprintf(out, "Failed to load config: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	flags := gittaginc.CommandsToFlags(filteredArgs, *mode)
 	if !flags.Valid || (!flags.Major && !flags.Minor && !flags.Patch && !flags.Release && flags.Env == "" && flags.Stage == "") {
 		Usage()
