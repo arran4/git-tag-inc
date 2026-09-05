@@ -207,14 +207,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(out, "Largest: %s (%s)\n", highest, currentHash)
+	_, _ = fmt.Fprintf(out, "Largest: %s (%s)\n", highest, currentHash)
 
 	if err := highest.Increment(flags, *allowBackwards, *skipForwards); err != nil {
 		_, _ = fmt.Fprintf(out, "%v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(out, "Creating %s\n", highest)
+	_, _ = fmt.Fprintf(out, "Creating %s\n", highest)
 	if *printVersionOnly {
 		fmt.Println(highest.String())
 		return
@@ -231,7 +231,7 @@ func main() {
 			Tagger:  tagger,
 		})
 	} else {
-		fmt.Fprintf(out, "Dry run finished.\n")
+		_, _ = fmt.Fprintf(out, "Dry run finished.\n")
 	}
 	if err != nil {
 		log.Printf("Failed to create tag: %v", err)
