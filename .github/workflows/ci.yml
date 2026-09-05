@@ -92,10 +92,15 @@ jobs:
           case "${{ github.event_name }}" in
             push)
               run_code_checks=true
-              if [[ "${{ github.ref }}" == refs/tags/v* ]] || [[ "${{ github.ref }}" == refs/tags/test-* ]]; then
+              if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+                if [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+                  run_build=true
+                  run_release=true
+                  run_publish=true
+                fi
+              elif [[ "${{ github.ref }}" == refs/tags/test-* ]]; then
                 run_build=true
-                run_release=true
-                run_publish=true
+                # test-* tags are built but not released/published
               fi
               ;;
             pull_request)
@@ -127,8 +132,8 @@ jobs:
                   run_release=true
                   ;;
                 publish-tag)
-                  if [[ "${{ github.ref_type }}" != "tag" || ( ! "${{ github.ref }}" =~ ^refs/tags/v.* && ! "${{ github.ref }}" =~ ^refs/tags/test-.* ) ]]; then
-                    echo "publish-tag mode requires an eligible tag context (e.g. refs/tags/v* or refs/tags/test-*)" >&2
+                  if [[ "${{ github.ref_type }}" != "tag" || ! "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+                    echo "publish-tag mode requires an eligible semantic tag context (e.g. refs/tags/vX.Y.Z...)" >&2
                     exit 1
                   fi
                   run_code_checks=true
