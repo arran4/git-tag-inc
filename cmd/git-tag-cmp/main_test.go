@@ -17,7 +17,7 @@ func TestMain(t *testing.T) {
 	if err := buildCmd.Run(); err != nil {
 		t.Fatalf("Failed to build binary: %v", err)
 	}
-	defer os.Remove(binaryName)
+	defer func() { _ = os.Remove(binaryName) }()
 
 	tests := []struct {
 		name     string
