@@ -34,7 +34,7 @@ func TestMain_NoGitRepo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	exeName := "git-tag-inc"
 	if runtime.GOOS == "windows" {
@@ -51,7 +51,7 @@ func TestMain_NoGitRepo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(nonGitDir)
+	defer func() { _ = os.RemoveAll(nonGitDir) }()
 
 	// Run the tool in the non-git dir
 	cmd := exec.Command(exePath, "patch")

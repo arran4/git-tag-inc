@@ -236,7 +236,7 @@ func ParseTag(tag string) (*Tag, error) {
 	var err error
 	t.Major, err = strconv.Atoi(majorStr)
 	if err != nil {
-		return nil, fmt.Errorf("Version component `major` value `%s` invalid", majorStr)
+		return nil, fmt.Errorf("version component `major` value `%s` invalid", majorStr)
 	}
 	s = s[dotIdx+1:]
 
@@ -248,7 +248,7 @@ func ParseTag(tag string) (*Tag, error) {
 	minorStr := s[:dotIdx]
 	t.Minor, err = strconv.Atoi(minorStr)
 	if err != nil {
-		return nil, fmt.Errorf("Version component `minor` value `%s` invalid", minorStr)
+		return nil, fmt.Errorf("version component `minor` value `%s` invalid", minorStr)
 	}
 	s = s[dotIdx+1:]
 
@@ -261,12 +261,12 @@ func ParseTag(tag string) (*Tag, error) {
 		}
 	}
 	if patchEndIdx == 0 {
-		return nil, fmt.Errorf("Version component `patch` value `%s` invalid", s)
+		return nil, fmt.Errorf("version component `patch` value `%s` invalid", s)
 	}
 	patchStr := s[:patchEndIdx]
 	t.Patch, err = strconv.Atoi(patchStr)
 	if err != nil {
-		return nil, fmt.Errorf("Version component `patch` value `%s` invalid", patchStr)
+		return nil, fmt.Errorf("version component `patch` value `%s` invalid", patchStr)
 	}
 
 	s = s[patchEndIdx:]

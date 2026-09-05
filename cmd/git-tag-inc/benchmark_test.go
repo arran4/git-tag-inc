@@ -22,7 +22,7 @@ func BenchmarkGetHash(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 
 	r, err := git.PlainInit(dir, false)
 	if err != nil {
@@ -85,7 +85,7 @@ func BenchmarkGetHashOnly(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 
 	r, err := git.PlainInit(dir, false)
 	if err != nil {

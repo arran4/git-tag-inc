@@ -98,7 +98,7 @@ func main() {
 		log.SetFlags(0)
 	}
 	if *verbose {
-		fmt.Fprintf(out, "Version: %s (%s) by %s commit %s\n", version, date, builtBy, commit)
+		_, _ = fmt.Fprintf(out, "Version: %s (%s) by %s commit %s\n", version, date, builtBy, commit)
 	}
 	flags := gittaginc.CommandsToFlags(filteredArgs, *mode)
 	if !flags.Valid || (!flags.Major && !flags.Minor && !flags.Patch && !flags.Release && flags.Env == "" && flags.Stage == "") {
@@ -109,7 +109,7 @@ func main() {
 	if baseVersionStr != "" {
 		t, err := gittaginc.ParseTag(baseVersionStr)
 		if err != nil {
-			fmt.Fprintf(out, "Invalid base version tag: %s (%v)\n", baseVersionStr, err)
+			_, _ = fmt.Fprintf(out, "Invalid base version tag: %s (%v)\n", baseVersionStr, err)
 			os.Exit(1)
 		}
 
@@ -117,7 +117,7 @@ func main() {
 			t.Mode = *mode
 		}
 		if err := t.Increment(flags, *allowBackwards, *skipForwards); err != nil {
-			fmt.Fprintf(out, "%v\n", err)
+			_, _ = fmt.Fprintf(out, "%v\n", err)
 			os.Exit(1)
 		}
 		// Ensure output goes directly to stdout, without any prefixes like "Largest:" or "Creating".
@@ -140,8 +140,8 @@ func main() {
 		cfg, cfgErr := r.ConfigScoped(config.SystemScope)
 		if cfgErr == nil {
 			if cfg.User.Name == "" || cfg.User.Email == "" {
-				fmt.Fprintf(out, "git user.name or user.email not configured\n")
-				fmt.Fprintf(out, "Run `git config --global user.name \"Your Name\"` and `git config --global user.email \"you@example.com\"`\n")
+				_, _ = fmt.Fprintf(out, "git user.name or user.email not configured\n")
+				_, _ = fmt.Fprintf(out, "Run `git config --global user.name \"Your Name\"` and `git config --global user.email \"you@example.com\"`\n")
 				os.Exit(1)
 				return
 			}
@@ -165,7 +165,7 @@ func main() {
 			os.Exit(1)
 		}
 		if !s.IsClean() {
-			fmt.Fprintf(out, "There are uncommited changes in thils repo.\n")
+			_, _ = fmt.Fprintf(out, "There are uncommited changes in thils repo.\n")
 			os.Exit(1)
 			return
 		}
@@ -179,7 +179,7 @@ func main() {
 	if !*repeating && currentHash != "" {
 		lastSimilar, err := FindHighestSimilarVersionTag(r, flags.Env)
 		if err != nil {
-			fmt.Fprintf(out, "Failed to find highest similar version tag: %v", err)
+			_, _ = fmt.Fprintf(out, "Failed to find highest similar version tag: %v", err)
 			os.Exit(1)
 		}
 		if lastSimilar != nil {
@@ -193,7 +193,7 @@ func main() {
 				}
 			} else {
 				if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
-					fmt.Fprintf(out, "Hash is the same for this and previous tag: (%s) %s and %s\n", lastSimilar, lastSimilarHash, currentHash)
+					_, _ = fmt.Fprintf(out, "Hash is the same for this and previous tag: (%s) %s and %s\n", lastSimilar, lastSimilarHash, currentHash)
 					os.Exit(1)
 					return
 				}
@@ -203,18 +203,18 @@ func main() {
 
 	highest, err := FindHighestVersionTag(r)
 	if err != nil {
-		fmt.Fprintf(out, "Failed to find highest version tag: %v", err)
+		_, _ = fmt.Fprintf(out, "Failed to find highest version tag: %v", err)
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(out, "Largest: %s (%s)\n", highest, currentHash)
+	_, _ = fmt.Fprintf(out, "Largest: %s (%s)\n", highest, currentHash)
 
 	if err := highest.Increment(flags, *allowBackwards, *skipForwards); err != nil {
-		fmt.Fprintf(out, "%v\n", err)
+		_, _ = fmt.Fprintf(out, "%v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(out, "Creating %s\n", highest)
+	_, _ = fmt.Fprintf(out, "Creating %s\n", highest)
 	if *printVersionOnly {
 		fmt.Println(highest.String())
 		return
@@ -231,7 +231,7 @@ func main() {
 			Tagger:  tagger,
 		})
 	} else {
-		fmt.Fprintf(out, "Dry run finished.\n")
+		_, _ = fmt.Fprintf(out, "Dry run finished.\n")
 	}
 	if err != nil {
 		log.Printf("Failed to create tag: %v", err)
@@ -308,10 +308,10 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 	} else {
 		startMode = *mode
 	}
-	var highest *gittaginc.Tag = &gittaginc.Tag{Mode: startMode}
+	highest := &gittaginc.Tag{Mode: startMode}
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
 		if *verbose {
-			fmt.Fprintf(out, "Ref: %s\n", ref.Name())
+			_, _ = fmt.Fprintf(out, "Ref: %s\n", ref.Name())
 		}
 		t, _ := gittaginc.ParseTag(ref.Name().Short())
 		if t == nil {
