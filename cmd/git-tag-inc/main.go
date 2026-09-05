@@ -98,7 +98,7 @@ func main() {
 		log.SetFlags(0)
 	}
 	if *verbose {
-		fmt.Fprintf(out, "Version: %s (%s) by %s commit %s\n", version, date, builtBy, commit)
+		_, _ = fmt.Fprintf(out, "Version: %s (%s) by %s commit %s\n", version, date, builtBy, commit)
 	}
 	flags := gittaginc.CommandsToFlags(filteredArgs, *mode)
 	if !flags.Valid || (!flags.Major && !flags.Minor && !flags.Patch && !flags.Release && flags.Env == "" && flags.Stage == "") {
@@ -109,7 +109,7 @@ func main() {
 	if baseVersionStr != "" {
 		t, err := gittaginc.ParseTag(baseVersionStr)
 		if err != nil {
-			fmt.Fprintf(out, "Invalid base version tag: %s (%v)\n", baseVersionStr, err)
+			_, _ = fmt.Fprintf(out, "Invalid base version tag: %s (%v)\n", baseVersionStr, err)
 			os.Exit(1)
 		}
 
@@ -117,7 +117,7 @@ func main() {
 			t.Mode = *mode
 		}
 		if err := t.Increment(flags, *allowBackwards, *skipForwards); err != nil {
-			fmt.Fprintf(out, "%v\n", err)
+			_, _ = fmt.Fprintf(out, "%v\n", err)
 			os.Exit(1)
 		}
 		// Ensure output goes directly to stdout, without any prefixes like "Largest:" or "Creating".
@@ -210,7 +210,7 @@ func main() {
 	fmt.Fprintf(out, "Largest: %s (%s)\n", highest, currentHash)
 
 	if err := highest.Increment(flags, *allowBackwards, *skipForwards); err != nil {
-		fmt.Fprintf(out, "%v\n", err)
+		_, _ = fmt.Fprintf(out, "%v\n", err)
 		os.Exit(1)
 	}
 
@@ -308,7 +308,7 @@ func FindHVersionTag(r *git.Repository, stop func(last, current *gittaginc.Tag) 
 	} else {
 		startMode = *mode
 	}
-	var highest *gittaginc.Tag = &gittaginc.Tag{Mode: startMode}
+	highest := &gittaginc.Tag{Mode: startMode}
 	if err := iter.ForEach(func(ref *plumbing.Reference) error {
 		if *verbose {
 			fmt.Fprintf(out, "Ref: %s\n", ref.Name())
