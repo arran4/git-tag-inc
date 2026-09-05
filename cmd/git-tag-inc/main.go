@@ -179,7 +179,7 @@ func main() {
 	if !*repeating && currentHash != "" {
 		lastSimilar, err := FindHighestSimilarVersionTag(r, flags.Env)
 		if err != nil {
-			fmt.Fprintf(out, "Failed to find highest similar version tag: %v", err)
+			_, _ = fmt.Fprintf(out, "Failed to find highest similar version tag: %v", err)
 			os.Exit(1)
 		}
 		if lastSimilar != nil {
@@ -193,7 +193,7 @@ func main() {
 				}
 			} else {
 				if len(lastSimilarHash) > 0 && lastSimilarHash == currentHash {
-					fmt.Fprintf(out, "Hash is the same for this and previous tag: (%s) %s and %s\n", lastSimilar, lastSimilarHash, currentHash)
+					_, _ = fmt.Fprintf(out, "Hash is the same for this and previous tag: (%s) %s and %s\n", lastSimilar, lastSimilarHash, currentHash)
 					os.Exit(1)
 					return
 				}
@@ -203,7 +203,7 @@ func main() {
 
 	highest, err := FindHighestVersionTag(r)
 	if err != nil {
-		fmt.Fprintf(out, "Failed to find highest version tag: %v", err)
+		_, _ = fmt.Fprintf(out, "Failed to find highest version tag: %v", err)
 		os.Exit(1)
 	}
 
